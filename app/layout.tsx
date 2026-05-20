@@ -5,20 +5,8 @@ import { Providers } from "./providers"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
 import FloatingCTA from "@/components/floating-cta"
-import {
-  CustomCursor,
-  CursorTrail,
-  DynamicBackground,
-  AuroraBackground,
-  CinematicGrain,
-  CinematicVignette,
-  LiquidEffect,
-  ThemeSwitcher,
-  ReactiveAudio
-} from "@/components/global-ui"
 import EarthScene from "@/components/earth-scene"
 
-// ✅ Configuración de la fuente Inter
 const inter = Inter({
   subsets: ["latin"],
   display: 'swap',
@@ -43,29 +31,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="es" className={`${inter.variable} scroll-smooth`} suppressHydrationWarning>
       <body className="font-[var(--font-inter)]">
         <Providers>
-          {/* 🌍 Fondo 3D interactivo (Tierra + Scroll) */}
+          {/* 🌍 Nuevo: Fondo Tierra 3D + Scroll */}
           <EarthScene />
-
-          {/* 🎨 Efectos Globales */}
-          <DynamicBackground />
-          <AuroraBackground />
-          <CinematicGrain />
-          <CinematicVignette />
-          <LiquidEffect />
-
-          {/* 🖱️ Cursor & Trail */}
-          <CustomCursor />
-          <CursorTrail />
 
           {/* 🧭 Layout Principal */}
           <Navbar />
           <FloatingCTA />
           <main className="relative z-10 min-h-screen">{children}</main>
           <Footer />
-
-          {/* 🎛️ Controles & Audio */}
-          <ThemeSwitcher />
-          <ReactiveAudio />
         </Providers>
       </body>
     </html>
