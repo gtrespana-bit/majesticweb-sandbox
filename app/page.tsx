@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronRight, Sparkles, ArrowUpRight, Globe, Zap, Rocket, Users, Star } from "lucide-react"
 import { MagneticButton, HoloCard, GradientBorder, ParallaxLayer } from '@/components/ui-premium'
-import EarthScene from "@/components/earth-scene"
 
 export default function HomePage() {
   const services = [
@@ -20,8 +19,8 @@ export default function HomePage() {
     <>
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 z-10">
-        <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8 text-center lg:text-left">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <div className="space-y-8">
             <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}>
               <Badge className="bg-[hsl(var(--primary))/0.2] text-[hsl(var(--primary))] border-[hsl(var(--primary))/0.3] px-4 py-2 backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 mr-2" /> Webs para negocios reales
@@ -32,26 +31,15 @@ export default function HomePage() {
               Tu negocio merece una <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">web que venda</span>
             </h1>
             
-            <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.2 }} className="text-lg text-[hsl(var(--muted-fg))] max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.2 }} className="text-lg text-[hsl(var(--muted-fg))] max-w-2xl mx-auto leading-relaxed">
               Sin tecnicismos. Sin complicaciones. Hacemos tu página web profesional para que tú solo te preocupes de atender a tus clientes.
             </motion.p>
             
-            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start" initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.4 }}>
+            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.4 }}>
               <MagneticButton><Link href="/contacto"><Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-6 text-lg shadow-xl shadow-purple-500/25 group">Quiero mi web <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></Button></Link></MagneticButton>
               <MagneticButton><Link href="/portfolio"><Button size="lg" variant="outline" className="border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] px-8 py-6 text-lg backdrop-blur-sm">Ver proyectos</Button></Link></MagneticButton>
             </motion.div>
           </div>
-          
-          {/* 🌍 TIERRA 3D (ÚNICA ESCENA) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="relative h-[400px] lg:h-[600px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20"
-          >
-            <EarthScene />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-          </motion.div>
         </div>
       </section>
 
