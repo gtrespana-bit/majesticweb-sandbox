@@ -1,0 +1,1868 @@
+import { Metadata } from 'next'
+import ContactFormMulti from '@/components/contact-form-multi'
+
+export const metadata: Metadata = {
+  title: "Contacto | Agenda tu Consulta Gratuita",
+  description: "Cuéntanos tu proyecto. Respondemos en menos de 24h con un plan de acción claro y presupuesto sin compromiso.",
+  openGraph: {
+    title: "Contacto | MajesticWeb",
+    description: "Agenda tu consulta gratuita. Diseño, SEO y rendimiento web de alto impacto.",
+    url: "https://majesticweb.studio/contacto",
+    siteName: "MajesticWeb",
+    locale: "es_ES",
+    type: "website",
+  },
+}
+
+export default function ContactPage() {
+  return <ContactFormMulti />
+}
+'use client'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { ArrowUpRight } from 'lucide-react'
+
+const projects = [
+  { id: 1, title: "E-Commerce Luxury", cat: "Tienda Online", img: "https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=800", metrics: "+210% conversión", year: "2024" },
+  { id: 2, title: "App Financiera", cat: "Fintech", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800", metrics: "4.9★ App Store", year: "2023" },
+  { id: 3, title: "Studio Creativo", cat: "Portfolio", img: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=800", metrics: "Awwwards Honorable", year: "2024" },
+  { id: 4, title: "Startup Tech", cat: "SaaS", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", metrics: "340% leads", year: "2023" },
+  { id: 5, title: "Restaurante Gourmet", cat: "Tienda Online", img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", metrics: "Reservas +150%", year: "2024" },
+  { id: 6, title: "Plataforma Educativa", cat: "SaaS", img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800", metrics: "12k usuarios/mes", year: "2023" }
+]
+const categories = ["Todos", "Tienda Online", "Fintech", "Portfolio", "SaaS"]
+
+export default function PortfolioPage() {
+  const [filter, setFilter] = useState("Todos")
+  const filtered = filter === "Todos" ? projects : projects.filter(p => p.cat === filter)
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader title="Nuestro Portfolio" subtitle="Proyectos que hablan por sí mismos. Cada sitio es una experiencia diseñada para convertir." />
+      <div className="flex flex-wrap justify-center gap-3 mb-12">
+        {categories.map(cat => (<button key={cat} onClick={() => setFilter(cat)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${filter === cat ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] border-transparent' : 'bg-transparent border-[hsl(var(--border))] text-[hsl(var(--muted-fg))] hover:text-[hsl(var(--fg))]'}`}>{cat}</button>))}
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((p, i) => (
+            <motion.div key={p.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
+              <GradientBorder className="rounded-xl overflow-hidden">
+                <div className="bg-[hsl(var(--card))] h-full flex flex-col">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <Image
+                      src={p.img}
+                      alt={p.title}
+                      fill
+                      priority={i === 0}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      quality={85}
+                    />
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="px-2 py-1 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--muted-fg))] text-xs">{p.cat}</span>
+                      <span className="text-xs text-[hsl(var(--muted-fg))]">{p.year}</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-[hsl(var(--fg))] mb-2">{p.title}</h3>
+                    <p className="text-sm text-[hsl(var(--muted-fg))] mt-auto flex items-center gap-1">📈 {p.metrics}</p>
+                    <Link href="/contacto" className="mt-4 block w-full"><button className="w-full px-4 py-2 rounded-lg bg-[hsl(var(--bg))] border border-[hsl(var(--border))] text-[hsl(var(--fg))] hover:bg-[hsl(var(--muted))] transition-all text-sm">Ver Proyecto <ArrowUpRight className="inline ml-1 w-3.5 h-3.5" /></button></Link>
+                  </div>
+                </div>
+              </GradientBorder>
+            </motion.div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
+      <div className="mt-16 text-center">
+        <h3 className="text-2xl font-bold mb-4 text-[hsl(var(--fg))]">¿Listo para tu caso de éxito?</h3>
+        <Link href="/contacto"><button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/20">Iniciar tu proyecto</button></Link>
+      </div>
+    </div>
+  )
+}
+import { Metadata } from 'next'
+import PerformanceContent from '@/components/performance-content'
+
+export const metadata: Metadata = {
+  title: "Velocidad y Core Web Vitals | MajesticWeb",
+  description: "Optimizamos la velocidad de carga, LCP, INP y CLS. Webs rápidas que retienen usuarios, mejoran el SEO y multiplican conversiones.",
+  openGraph: {
+    title: "Velocidad y Core Web Vitals | MajesticWeb",
+    description: "Optimización de LCP, INP y CLS. Webs que cargan en <2s y retienen usuarios.",
+    url: "https://majesticweb.studio/rendimiento-web",
+    siteName: "MajesticWeb",
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Velocidad y Core Web Vitals | MajesticWeb",
+    description: "Compresión moderna, lazy loading y edge caching para webs instantáneas.",
+  },
+}
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Optimización de Velocidad y Core Web Vitals",
+  "provider": { "@type": "Organization", "name": "MajesticWeb", "url": "https://majesticweb.studio" },
+  "description": "Auditoría y optimización de LCP, INP y CLS. Implementación de compresión WebP/AVIF, code splitting, critical CSS y caching en Edge."
+}
+
+export default function PerformancePage() {
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PerformanceContent />
+    </>
+  )
+}
+import { Metadata } from 'next'
+import SeoContent from '@/components/seo-content'
+
+export const metadata: Metadata = {
+  title: "SEO Técnico y Estratégico | MajesticWeb",
+  description: "Posiciona tu web en Google con auditorías técnicas, optimización de contenido y estrategia de keywords. Resultados medibles y tráfico cualificado.",
+  openGraph: {
+    title: "SEO Técnico y Estratégico | MajesticWeb",
+    description: "Posiciona tu web en Google con auditorías técnicas, optimización de contenido y estrategia de keywords.",
+    url: "https://majesticweb.studio/seo",
+    siteName: "MajesticWeb",
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SEO Técnico y Estratégico | MajesticWeb",
+    description: "Auditorías, keywords y SEO on-page que escalan tu tráfico orgánico.",
+  },
+}
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      "name": "SEO Técnico y Estratégico",
+      "provider": { "@type": "Organization", "name": "MajesticWeb", "url": "https://majesticweb.studio" },
+      "description": "Posicionamiento web con auditorías técnicas, estrategia de keywords, SEO on-page y construcción de autoridad."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "¿Cuánto tiempo tarda en verse resultados con SEO?", "acceptedAnswer": { "@type": "Answer", "text": "Los primeros movimientos técnicos se reflejan en 2-4 semanas. El crecimiento orgánico sostenido suele consolidarse entre los 3 y 6 meses." } },
+        { "@type": "Question", "name": "¿El SEO sigue funcionando en 2024/2025?", "acceptedAnswer": { "@type": "Answer", "text": "Más que nunca. Google prioriza la experiencia del usuario, la autoridad temática y la calidad del contenido." } },
+        { "@type": "Question", "name": "¿Trabajáis con WordPress, Shopify o desarrollos a medida?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Adaptamos la estrategia a tu stack técnico, aplicando SEO avanzado en WordPress, Shopify o Next.js/React." } }
+      ]
+    }
+  ]
+}
+
+export default function SEOPage() {
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <SeoContent />
+    </>
+  )
+}
+'use client'
+
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { CheckCircle2, ArrowRight, Globe, Zap, Rocket, Code2 } from 'lucide-react'
+
+const services = [
+  { icon: <Globe className="w-6 h-6" />, title: "Diseño Web Corporativo", desc: "Sitios institucionales que reflejan la identidad de tu marca con navegación intuitiva.", features: ["UX/UI personalizado", "SEO técnico on-page", "Integración CMS", "Responsive total"] },
+  { icon: <Zap className="w-6 h-6" />, title: "Experiencias 3D e Interactivas", desc: "Implementamos Spline, Three.js y WebGL para crear inmersión real.", features: ["Modelado 3D optimizado", "Animaciones interactivas", "Rendimiento 60fps", "Cross-browser"] },
+  { icon: <Rocket className="w-6 h-6" />, title: "E-Commerce & Tiendas Online", desc: "Plataformas de venta escalables con checkout optimizado y pasarelas seguras.", features: ["Shopify / WooCommerce", "Checkout de alta conversión", "Gestión de inventario", "Automatización emails"] },
+  { icon: <Code2 className="w-6 h-6" />, title: "Desarrollo Web Apps & SaaS", desc: "Aplicaciones web complejas, dashboards y herramientas internas modernas.", features: ["Next.js / React", "APIs REST & GraphQL", "Auth & Roles", "Despliegue cloud"] }
+]
+
+const plans = [
+  { name: "Esencial", price: "Desde 950€", desc: "Ideal para startups", features: ["Diseño UI/UX a medida", "Hasta 5 páginas", "SEO básico", "Formulario de contacto", "Entrega en 7-10 días"], popular: false },
+  { name: "Profesional", price: "Desde 1.950€", desc: "Para empresas en crecimiento", features: ["Todo lo del plan Esencial", "Hasta 10 páginas + Blog", "Animaciones avanzadas", "Integración CRM/Analytics", "Core Web Vitals", "Soporte 30 días"], popular: true },
+  { name: "Enterprise", price: "A medida", desc: "Proyectos complejos", features: ["Arquitectura personalizada", "Desarrollo 3D/Spline", "E-commerce completo", "APIs & Integraciones", "Mantenimiento premium", "SLA garantizado"], popular: false }
+]
+
+export default function ServicesPage() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-24">
+      <PageHeader title="Nuestros Servicios" subtitle="Soluciones digitales de alto impacto diseñadas para escalar tu negocio." />
+
+      <section>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-[hsl(var(--fg))]">Qué hacemos mejor</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {services.map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+              <GradientBorder className="h-full">
+                <div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col">
+                  <div className="w-12 h-12 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))] mb-3">{s.icon}</div>
+                  <h3 className="text-xl font-bold text-[hsl(var(--fg))] mb-2">{s.title}</h3>
+                  <p className="text-[hsl(var(--muted-fg))] mb-4 text-sm">{s.desc}</p>
+                  <ul className="space-y-2 mt-auto">{s.features.map((f, j) => (<li key={j} className="flex items-center gap-2 text-sm text-[hsl(var(--fg))]"><CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" /> {f}</li>))}</ul>
+                </div>
+              </GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-[hsl(var(--card))/0.2] border border-[hsl(var(--border))] rounded-2xl p-6 md:p-10">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-[hsl(var(--fg))]">Inversión adaptada a tus objetivos</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {plans.map((p, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }} className={p.popular ? "relative" : ""}>
+              {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] text-xs font-bold px-3 py-1 rounded-full shadow-lg">Más elegido</div>}
+              <GradientBorder className="h-full">
+                <div className={`bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col ${p.popular ? 'ring-2 ring-[hsl(var(--primary))]' : ''}`}>
+                  <div className="text-center pb-4"><h3 className="text-lg font-bold text-[hsl(var(--fg))]">{p.name}</h3><div className="text-3xl font-bold text-[hsl(var(--fg))] mt-2">{p.price}</div><p className="text-sm text-[hsl(var(--muted-fg))] mt-1">{p.desc}</p></div>
+                  <ul className="space-y-3 mb-6 flex-1">{p.features.map((f, j) => (<li key={j} className="flex items-start gap-2 text-sm text-[hsl(var(--fg))]"><CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" /> {f}</li>))}</ul>
+                  <Link href="/contacto" className="block"><button className={`w-full px-4 py-3 rounded-lg text-sm font-semibold transition-all ${p.popular ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] hover:bg-[hsl(var(--primary))/0.9]' : 'bg-[hsl(var(--bg))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--fg))]'}`}>Solicitar presupuesto</button></Link>
+                </div>
+              </GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center py-10">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">¿No sabes qué servicio necesitas?</h2>
+        <p className="text-[hsl(var(--muted-fg))] max-w-xl mx-auto mb-6">Agenda una llamada estratégica gratuita.</p>
+        <Link href="/contacto"><button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/20 group">Agendar consulta gratuita <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></Link>
+      </motion.div>
+    </div>
+  )
+}
+'use client'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { Code2, Palette, Zap, ShieldCheck, Rocket, ArrowRight } from 'lucide-react'
+
+const values = [
+  { icon: <Palette className="w-6 h-6" />, title: "Diseño Centrado", desc: "Cada píxel tiene un propósito. Investigamos, prototipamos y validamos antes de escribir código." },
+  { icon: <Zap className="w-6 h-6" />, title: "Rendimiento Extremo", desc: "Optimizamos assets, aplicamos SSR y priorizamos Core Web Vitals. Tu web vuela." },
+  { icon: <ShieldCheck className="w-6 h-6" />, title: "Seguridad & Escalabilidad", desc: "Arquitecturas modernas, backups automáticos y estándares WCAG." },
+  { icon: <Rocket className="w-6 h-6" />, title: "Resultados Medibles", desc: "Entregamos métricas: conversión, retención y ROI claro." }
+]
+const stack = ["Next.js", "React", "TypeScript", "Tailwind", "Node.js", "PostgreSQL", "Figma", "Spline", "Vercel", "Stripe"]
+
+export default function AboutPage() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-20">
+      <PageHeader title="Sobre Nosotros" subtitle="El equipo detrás de cada píxel y cada línea de código." />
+      <section>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-[hsl(var(--fg))]">Nuestros Pilares</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {values.map((v, i) => (
+            <motion.div key={i} initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay: i*0.1 }}>
+              <GradientBorder className="h-full">
+                <div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col">
+                  <div className="w-12 h-12 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))] mb-3">{v.icon}</div>
+                  <h3 className="text-lg font-bold text-[hsl(var(--fg))] mb-2">{v.title}</h3>
+                  <p className="text-sm text-[hsl(var(--muted-fg))] leading-relaxed flex-1">{v.desc}</p>
+                </div>
+              </GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+      <section className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-[hsl(var(--fg))]">Stack Tecnológico</h2>
+        <p className="text-[hsl(var(--muted-fg))] max-w-2xl mx-auto mb-8">Herramientas modernas, probadas y escalables.</p>
+        <div className="flex flex-wrap justify-center gap-3">{stack.map((tech, i) => (<motion.div key={i} initial={{ scale:0.9, opacity:0 }} whileInView={{ scale:1, opacity:1 }} viewport={{ once:true }} transition={{ delay: i*0.05 }}><span className="px-4 py-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm text-[hsl(var(--fg))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors cursor-default inline-block">{tech}</span></motion.div>))}</div>
+      </section>
+      <section className="bg-[hsl(var(--card))/0.2] border border-[hsl(var(--border))] rounded-2xl p-8 md:p-12">
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">De la idea al lanzamiento en 4 pasos</h2>
+            <ul className="space-y-4">{["Descubrimiento & Estrategia", "Diseño UX/UI & Prototipos", "Desarrollo & Testing", "Lanzamiento & Optimización"].map((step, i) => (<li key={i} className="flex items-start gap-3"><div className="w-8 h-8 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center text-sm font-bold mt-0.5">{i+1}</div><p className="text-[hsl(var(--fg))]">{step}</p></li>))}</ul>
+            <Link href="/contacto"><button className="mt-6 px-6 py-3 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] hover:bg-[hsl(var(--primary))/0.9] font-semibold transition-all">Ver detalles del proceso <ArrowRight className="inline ml-2 w-4 h-4" /></button></Link>
+          </div>
+          <div className="relative rounded-xl overflow-hidden border border-[hsl(var(--border))] aspect-square md:aspect-auto bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--accent))/0.1] flex items-center justify-center"><Code2 className="w-24 h-24 text-[hsl(var(--primary))/0.3]" /></div>
+        </div>
+      </section>
+    </div>
+  )
+}
+import { Metadata } from 'next'
+import UxUiContent from '@/components/ux-ui-content'
+
+export const metadata: Metadata = {
+  title: "Diseño UX/UI Centrado en Conversión | MajesticWeb",
+  description: "Creamos interfaces intuitivas, atractivas y orientadas a resultados. Prototipado, testing y diseño sistemático que convierte visitantes en clientes.",
+  openGraph: {
+    title: "Diseño UX/UI Centrado en Conversión | MajesticWeb",
+    description: "Interfaces intuitivas y prototipado validado que reducen el rebote y multiplican conversiones.",
+    url: "https://majesticweb.studio/ux-ui",
+    siteName: "MajesticWeb",
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Diseño UX/UI Centrado en Conversión | MajesticWeb",
+    description: "Prototipado, testing y diseño visual que guían al usuario hacia la conversión.",
+  },
+}
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Diseño UX/UI Centrado en Conversión",
+  "provider": { "@type": "Organization", "name": "MajesticWeb", "url": "https://majesticweb.studio" },
+  "description": "Diseño de experiencias de usuario e interfaces visuales validadas con testing, enfocadas en reducir la fricción y aumentar conversiones."
+}
+
+export default function UXUIPage() {
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <UxUiContent />
+    </>
+  )
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 VARIABLES DE TEMA */
+:root, [data-theme="dark"] {
+  --bg: 215 28% 9%;
+  --fg: 210 20% 96%;
+  --card: 215 25% 13%;
+  --card-fg: 210 40% 96%;
+  --primary: 243 75% 62%;
+  --primary-fg: 0 0% 100%;
+  --muted: 215 20% 18%;
+  --muted-fg: 215 10% 65%;
+  --border: 215 20% 24%;
+  --accent: 270 65% 55%;
+}
+[data-theme="light"] {
+  --bg: 210 20% 98%;
+  --fg: 222 47% 8%;
+  --card: 0 0% 100%;
+  --card-fg: 222 47% 8%;
+  --primary: 221 83% 45%;
+  --primary-fg: 0 0% 100%;
+  --muted: 210 15% 92%;
+  --muted-fg: 215 16% 35%;
+  --border: 214 20% 88%;
+  --accent: 195 80% 45%;
+}
+[data-theme="cyber"] {
+  --bg: 280 30% 6%;
+  --fg: 0 0% 95%;
+  --card: 280 25% 11%;
+  --card-fg: 0 0% 95%;
+  --primary: 315 85% 60%;
+  --primary-fg: 0 0% 100%;
+  --muted: 280 20% 16%;
+  --muted-fg: 270 20% 70%;
+  --border: 280 20% 22%;
+  --accent: 175 90% 50%;
+}
+
+@layer base {
+  * { border-color: hsl(var(--border)); }
+  body {
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    background-color: hsl(var(--bg));
+    color: hsl(var(--fg));
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+/* 🎬 CINEMÁTICO + UI */
+.cinematic-grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.035; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+.cinematic-vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 4;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.5) 100%);
+}
+
+/* 🖱️ CURSOR BASE & FALLBACKS */
+.cursor-dot, .cursor-ring, .cursor-glow {
+  position: fixed; top: 0; left: 0; pointer-events: none; z-index: 99999; will-change: transform;
+}
+.cursor-dot { width: 5px; height: 5px; background: hsl(var(--fg)); border-radius: 50%; transform: translate(-50%, -50%); }
+.cursor-ring { width: 20px; height: 20px; border: 1.5px solid hsla(var(--fg), 0.5); border-radius: 50%; transform: translate(-50%, -50%); transition: width 0.25s, height 0.25s, border-color 0.25s; }
+.cursor-ring.hover { width: 44px; height: 44px; border-color: hsl(var(--primary)); }
+.cursor-glow { width: 350px; height: 350px; background: radial-gradient(circle, hsla(var(--primary), 0.18) 0%, transparent 75%); transform: translate(-50%, -50%); }
+
+/* 🌊 EFECTO LÍQUIDO */
+.liquid-ripple {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 10;
+  background: radial-gradient(circle, hsla(var(--primary), 0.4) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: liquid-expand 0.8s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes liquid-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+/* 🎨 LUZ AMBIENTAL */
+.aurora-bg {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.6;
+  background: 
+    radial-gradient(1000px circle at var(--mx, 50%) var(--my, 50%), hsla(var(--primary), 0.15), transparent 50%),
+    radial-gradient(800px circle at calc(var(--mx, 50%) + 10%) calc(var(--my, 50%) - 10%), hsla(var(--accent), 0.1), transparent 50%);
+  filter: blur(60px); transition: background 0.3s;
+}
+
+/* 🌈 BORDE GRADIENTE PREMIUM (Flujo Lineal Continuo - Estable) */
+.gradient-border {
+  position: relative;
+  border-radius: 1rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--accent)) 50%,
+    hsl(var(--primary)) 100%
+  );
+  background-size: 300% 100%;
+  animation: border-flow 5s linear infinite;
+  isolation: isolate;
+}
+.gradient-border:hover {
+  animation-play-state: paused;
+}
+.gradient-border > * {
+  position: relative;
+  z-index: 1;
+  background: hsl(var(--card));
+  border-radius: inherit;
+  height: 100%;
+  width: 100%;
+}
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* ✨ CURSOR TRAIL */
+.cursor-trail {
+  position: fixed; width: 5px; height: 5px; background: hsl(var(--primary));
+  border-radius: 50%; pointer-events: none; z-index: 99998;
+  opacity: 0; transform: translate(-50%, -50%) scale(0);
+  animation: fade-trail 0.5s ease-out forwards;
+}
+@keyframes fade-trail {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) translateY(-8px); }
+}
+
+/* 🃏 TARJETAS HOLOGRÁFICAS */
+.holo-card {
+  transform-style: preserve-3d; transform: perspective(1000px);
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.holo-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.06), transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.holo-card:hover::before { opacity: 1; }
+
+/* 📏 SCROLLBAR + UTILS */
+html { scroll-behavior: smooth; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--bg)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
+
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+/* 🖥️ MEDIA QUERIES (Desktop vs Mobile) */
+@media (min-width: 769px) { body { cursor: none; } }
+@media (max-width: 768px) {
+  .cursor-dot, .cursor-ring, .cursor-glow, .cursor-trail { display: none; }
+  body { cursor: auto; }
+}
+
+/* 🎨 MICRO-INTERACCIONES PREMIUM */
+.hover-lift {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 14px 28px -10px hsl(var(--primary)/0.28);
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--primary)/0.45);
+}
+.btn-press:active {
+  transform: scale(0.96);
+  transition: transform 0.12s ease;
+}
+.link-underline {
+  position: relative;
+  text-decoration: none;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-underline:hover::after {
+  width: 100%;
+}
+import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { Providers } from "./providers"
+import Navbar from "@/components/Navbar"
+import Footer from "@/components/Footer"
+import FloatingCTA from "@/components/floating-cta"
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-inter',
+  preload: true,
+  fallback: ['system-ui', 'arial'],
+})
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+}
+
+export const metadata: Metadata = {
+  title: "MajesticWeb | Estudio de Diseño Digital Premium",
+  description: "Creamos experiencias web inmersivas con diseño 3D, tecnología de punta y estrategia digital.",
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="es" className={`${inter.variable} scroll-smooth`} suppressHydrationWarning>
+      <body className="font-[var(--font-inter)]">
+        <Providers>
+          <Navbar />
+          <FloatingCTA />
+          {children}
+          <Footer />
+        </Providers>
+      </body>
+    </html>
+  )
+}
+'use client'
+
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { SplineScene } from "@/components/ui/splite"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ChevronRight, Sparkles, ArrowUpRight, Globe, Zap, Rocket, Users, Star } from "lucide-react"
+import { MagneticButton, HoloCard, GradientBorder, ParallaxLayer } from '@/components/ui-premium'
+
+export default function HomePage() {
+  const services = [
+    { icon: <Globe className="w-7 h-7" />, title: "Diseño Web Premium", description: "Sitios web únicos que capturan la esencia de tu marca." },
+    { icon: <Zap className="w-7 h-7" />, title: "Experiencias 3D", description: "Tecnología Spline para mundos interactivos." },
+    { icon: <Rocket className="w-7 h-7" />, title: "SEO & Performance", description: "Velocidad extrema y posicionamiento orgánico." },
+    { icon: <Users className="w-7 h-7" />, title: "Soporte Premium", description: "Acompañamiento 24/7 para escalar tu proyecto." }
+  ]
+
+  return (
+    <>
+      {/* HERO */}
+      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 z-10">
+        <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8 text-center lg:text-left">
+            <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}>
+              <Badge className="bg-[hsl(var(--primary))/0.2] text-[hsl(var(--primary))] border-[hsl(var(--primary))/0.3] px-4 py-2 backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 mr-2" /> Estudio de Diseño Digital
+              </Badge>
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-[hsl(var(--fg))]">
+              Creamos <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">Experiencias Web</span> que Inspiran
+            </h1>
+            
+            <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.2 }} className="text-lg text-[hsl(var(--muted-fg))] max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              Fusionamos diseño elegante, tecnología 3D y estrategia digital para construir sitios web que convierten visitantes en clientes.
+            </motion.p>
+            
+            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start" initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.4 }}>
+              <MagneticButton><Link href="/contacto"><Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-6 text-lg shadow-xl shadow-purple-500/25 group">Empezar Proyecto <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></Button></Link></MagneticButton>
+              <MagneticButton><Link href="/portfolio"><Button size="lg" variant="outline" className="border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] px-8 py-6 text-lg backdrop-blur-sm">Ver Portfolio</Button></Link></MagneticButton>
+            </motion.div>
+          </div>
+          
+          {/* ✅ ROBOT DEL HERO (RESTAURADO Y SIN FLOATINGROBOT) */}
+          <motion.div initial={{ opacity:0, scale:0.85, rotateX:12 }} animate={{ opacity:1, scale:1, rotateX:0 }} transition={{ duration:1.4, delay:0.5, ease:[0.22,1,0.36,1] }} className="relative h-[400px] lg:h-[600px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20">
+            <SplineScene className="w-full h-full" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SERVICES PREVIEW */}
+      <ParallaxLayer speed={0.15}>
+        <section className="py-24 relative z-10">
+          <div className="container mx-auto px-4 text-center mb-12">
+            <Badge className="mb-4 bg-[hsl(var(--primary))/0.2] text-[hsl(var(--primary))] border-[hsl(var(--primary))/0.3]">Servicios</Badge>
+            <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--fg))]">Soluciones de <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Alto Impacto</span></h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((s,i)=>(
+              <motion.div key={i} initial={{ opacity:0, y:40 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay:i*0.15 }}>
+                <GradientBorder className="h-full"><HoloCard className="h-full"><div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full group">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">{s.icon}</div>
+                  <h3 className="text-lg font-bold text-[hsl(var(--fg))] mb-2">{s.title}</h3>
+                  <p className="text-sm text-[hsl(var(--muted-fg))]">{s.description}</p>
+                </div></HoloCard></GradientBorder>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      </ParallaxLayer>
+
+      {/* PORTFOLIO PREVIEW */}
+      <ParallaxLayer speed={0.1}>
+        <section className="py-24 relative z-10">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
+              <div><Badge className="mb-4 bg-pink-500/20 text-pink-400 border-pink-500/30">Portfolio</Badge><h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--fg))]">Proyectos que <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-orange-400">Hablan por Sí Mismos</span></h2></div>
+              <MagneticButton className="mt-4 md:mt-0"><Link href="/portfolio"><Button variant="ghost" className="text-[hsl(var(--muted-fg))] hover:text-[hsl(var(--fg))] group">Ver Todos <ArrowUpRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" /></Button></Link></MagneticButton>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[{t:"E-Commerce Luxury",c:"Tienda Online",i:"https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=800"},{t:"App Financiera",c:"Fintech",i:"https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800"}].map((p,i)=>(
+                <motion.div key={i} initial={{ opacity:0, scale:0.95 }} whileInView={{ opacity:1, scale:1 }} viewport={{ once:true }} transition={{ delay:i*0.1 }}>
+                  <GradientBorder className="rounded-2xl overflow-hidden group"><HoloCard className="rounded-2xl overflow-hidden"><div className="bg-[hsl(var(--card))] h-full">
+                    <div className="relative aspect-video overflow-hidden"><img src={p.i} alt={p.t} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6"><Button size="sm" className="bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20">Ver Proyecto</Button></div></div>
+                    <div className="p-6"><Badge variant="secondary" className="mb-2 text-xs">{p.c}</Badge><h3 className="text-xl font-semibold text-[hsl(var(--fg))] group-hover:text-purple-400 transition-colors">{p.t}</h3></div>
+                  </div></HoloCard></GradientBorder>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </ParallaxLayer>
+
+      {/* TESTIMONIALS PREVIEW */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-4 text-center mb-12">
+          <Badge className="mb-4 bg-green-500/20 text-green-400 border-green-500/30">Testimonios</Badge>
+          <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--fg))]">Lo que Dicen <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-400">Nuestros Clientes</span></h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[{n:"María G.",r:"CEO, InnovateLab",t:"Resultados superiores a expectativas.",s:5},{n:"Carlos M.",r:"Founder, TechStart",t:"La experiencia 3D es espectacular.",s:5},{n:"Ana R.",r:"Director, LuxeBrand",t:"Conversiones +340% tras el rediseño.",s:5}].map((t,i)=>(
+            <motion.div key={i} initial={{ opacity:0, y:40 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay:i*0.15 }}>
+              <GradientBorder className="rounded-2xl h-full"><HoloCard className="rounded-2xl h-full"><div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full">
+                <div className="flex gap-1 mb-3">{[...Array(t.s)].map((_,j)=><Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}</div>
+                <p className="text-[hsl(var(--muted-fg))] italic mb-4 text-sm">"{t.t}"</p>
+                <div className="flex items-center gap-3 pt-3 border-t border-[hsl(var(--border))]"><div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">{t.n[0]}</div><div className="text-left"><div className="text-sm font-semibold text-[hsl(var(--fg))]">{t.n}</div><div className="text-xs text-[hsl(var(--muted-fg))]">{t.r}</div></div></div>
+              </div></HoloCard></GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <ParallaxLayer speed={0.05}>
+        <section className="py-24 relative z-10">
+          <div className="container mx-auto px-4 text-center">
+            <motion.div initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
+              <GradientBorder className="rounded-3xl max-w-4xl mx-auto"><HoloCard className="rounded-3xl"><div className="bg-[hsl(var(--card))] rounded-3xl p-8 md:p-12">
+                <Sparkles className="w-12 h-12 mx-auto text-purple-400 animate-float mb-4" />
+                <h2 className="text-3xl md:text-4xl font-bold text-[hsl(var(--fg))] mb-4">¿Listo para Transformar tu Presencia Digital?</h2>
+                <p className="text-[hsl(var(--muted-fg))] text-lg max-w-xl mx-auto mb-8">Agenda una consulta gratuita y descubre cómo podemos llevar tu proyecto al siguiente nivel.</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <MagneticButton><Link href="/contacto"><Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-6 text-lg shadow-xl shadow-purple-500/20">Agendar Consulta Gratis <ChevronRight className="ml-2 w-5 h-5" /></Button></Link></MagneticButton>
+                  <MagneticButton><Link href="/sobre-nosotros"><Button size="lg" variant="outline" className="border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] px-8 py-6 text-lg backdrop-blur-sm">Conocer el Equipo</Button></Link></MagneticButton>
+                </div>
+              </div></HoloCard></GradientBorder>
+            </motion.div>
+          </div>
+        </section>
+      </ParallaxLayer>
+    </>
+  )
+}
+'use client'
+
+import { useState, useEffect, createContext, ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CustomCursor, CursorTrail, DynamicBackground, AuroraBackground, CinematicGrain, CinematicVignette, LiquidEffect, ThemeSwitcher, ReactiveAudio } from '@/components/global-ui'
+
+export const ThemeContext = createContext<{ theme: 'dark' | 'light' | 'cyber'; setTheme: (t: 'dark' | 'light' | 'cyber') => void }>({ theme: 'dark', setTheme: () => {} })
+
+export function Providers({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<'dark' | 'light' | 'cyber'>('dark')
+  const [mobile, setMobile] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setMobile(window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent))
+    }
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <DynamicBackground theme={theme} mobile={mobile} />
+        <AuroraBackground />
+        <CinematicGrain />
+        <CinematicVignette />
+      </div>
+
+      {!mobile && <CustomCursor />}
+      <CursorTrail mobile={mobile} />
+      <LiquidEffect />
+      
+      <ThemeSwitcher />
+      <ReactiveAudio />
+
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="relative z-10 min-h-screen flex flex-col overflow-x-hidden transition-colors duration-500"
+          style={{ color: 'hsl(var(--fg))' }}
+        >
+          {children}
+        </motion.main>
+      </AnimatePresence>
+    </ThemeContext.Provider>
+  )
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { usePathname } from 'next/navigation'
+
+export default function Template({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+        className="min-h-screen"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  }
+)
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
+}
+
+export { Badge, badgeVariants }
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-12 rounded-lg px-8 text-base",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: { variant: "default", size: "default" },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("rounded-xl border bg-card text-card-foreground shadow-lg", className)} {...props} />
+  )
+)
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+  )
+)
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h3 ref={ref} className={cn("text-2xl font-bold leading-none tracking-tight", className)} {...props} />
+  )
+)
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => (
+    <p ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
+  )
+)
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  )
+)
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  )
+)
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+'use client'
+
+import React, { useState, useEffect } from 'react'
+
+const DEFAULT_SPLINE_URL = "https://my.spline.design/nexbotrobotcharacterconcept-vpDGeeHrll7A8gjDFeSDRA3n/"
+
+interface SplineSceneProps {
+  className?: string  // ✅ Sin prop 'scene'
+}
+
+export function SplineScene({ className = '' }: SplineSceneProps) {
+  const [loaded, setLoaded] = useState(false)
+  const [showFallback, setShowFallback] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => { if (!loaded) setShowFallback(true) }, 4000)
+    return () => clearTimeout(timer)
+  }, [loaded])
+
+  if (showFallback) {
+    return (
+      <div className={`relative w-full h-full overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/30 to-pink-900/30 flex items-center justify-center ${className}`}>
+        <div className="text-center relative z-10 px-6">
+          <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+            <span className="text-2xl">🤖</span>
+          </div>
+          <p className="text-neutral-300 text-sm">Cargando NexBot...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`relative w-full h-full overflow-hidden rounded-2xl ${className}`}>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/30">
+          <div className="w-8 h-8 border-2 border-purple-500/50 border-t-purple-400 rounded-full animate-spin" />
+        </div>
+      )}
+      <iframe
+        src={DEFAULT_SPLINE_URL}
+        className="w-full h-full border-0"
+        title="NexBot 3D Robot"
+        loading="lazy"
+        allow="autoplay; fullscreen; pointer-lock"
+        sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+        onLoad={() => setLoaded(true)}
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
+      />
+    </div>
+  )
+}
+
+export default SplineScene
+import React from "react";
+import { cn } from "@/lib/utils";
+
+type SpotlightProps = {
+  className?: string;
+  fill?: string;
+};
+
+export const Spotlight = ({ className, fill }: SpotlightProps) => {
+  return (
+    <svg
+      className={cn(
+        "animate-spotlight pointer-events-none absolute z-[1] h-[169%] w-[138%] lg:w-[84%] opacity-0",
+        className
+      )}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 3787 2842"
+      fill="none"
+    >
+      <g filter="url(#filter)">
+        <ellipse
+          cx="1924.71"
+          cy="273.501"
+          rx="1924.71"
+          ry="273.501"
+          transform="matrix(-0.822377 -0.568943 -0.568943 0.822377 3631.88 2291.09)"
+          fill={fill || "white"}
+          fillOpacity="0.21"
+        ></ellipse>
+      </g>
+      <defs>
+        <filter
+          id="filter"
+          x="0.860352"
+          y="0.838989"
+          width="3785.16"
+          height="2840.26"
+          filterUnits="userSpaceOnUse"
+          colorInterpolationFilters="sRGB"
+        >
+          <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
+          <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+          <feGaussianBlur stdDeviation="151" result="effect1_foregroundBlur_1065_8" />
+        </filter>
+      </defs>
+    </svg>
+  );
+};
+'use client'
+
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { Mail, Phone, MapPin, Send, CheckCircle2, ArrowRight, ArrowLeft, Clock } from 'lucide-react'
+
+export default function ContactFormMulti() {
+  const [step, setStep] = useState(1)
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle')
+  const [form, setForm] = useState({ name: '', email: '', type: '', budget: '', message: '' })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep = (currentStep: number) => {
+    const newErrors: Record<string, string> = {}
+    if (currentStep === 1) {
+      if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email no válido'
+    }
+    if (currentStep === 2) {
+      if (!form.type) newErrors.type = 'Selecciona un tipo de proyecto'
+    }
+    if (currentStep === 3) {
+      if (form.message.trim().length < 20) newErrors.message = 'Mínimo 20 caracteres para entender tu proyecto'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const nextStep = () => { if (validateStep(step)) setStep(s => Math.min(s + 1, 3)) }
+  const prevStep = () => { setErrors({}); setStep(s => Math.max(s - 1, 1)) }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateStep(3)) return
+    setStatus('sending')
+    setTimeout(() => setStatus('success'), 1500)
+  }
+
+  const inputClass = (field: string) =>
+    `w-full px-4 py-3 rounded-lg bg-[hsl(var(--bg))] border ${errors[field] ? 'border-red-500' : 'border-[hsl(var(--border))]'} text-[hsl(var(--fg))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.5] focus:border-transparent transition-all placeholder:text-[hsl(var(--muted-fg))]`
+
+  if (status === 'success') {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="max-w-lg mx-auto">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-[hsl(var(--fg))] mb-2">¡Mensaje enviado!</h2>
+          <p className="text-[hsl(var(--muted-fg))] mb-6">Gracias {form.name}. Te contactaremos en menos de 24 horas.</p>
+          <button onClick={() => { setStatus('idle'); setStep(1); setForm({ name: '', email: '', type: '', budget: '', message: '' }) }} className="px-6 py-3 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] hover:bg-[hsl(var(--primary))/0.9] font-semibold transition-all">Enviar otro mensaje</button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader title="Contáctanos" subtitle="Agenda una consulta gratuita y llevemos tu proyecto al siguiente nivel." />
+      <div className="grid lg:grid-cols-5 gap-8 max-w-6xl mx-auto mt-8">
+        {/* Sidebar Info */}
+        <motion.div className="lg:col-span-2 space-y-6" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+          <GradientBorder><div className="bg-[hsl(var(--card))] rounded-xl p-6">
+            <h3 className="text-xl font-bold text-[hsl(var(--fg))] mb-1">Hablemos de tu proyecto</h3>
+            <p className="text-[hsl(var(--muted-fg))] text-sm mb-4">Responderemos en menos de 24 horas.</p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-[hsl(var(--muted-fg))]"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))]"><Mail className="w-5 h-5" /></div><div><div className="text-sm font-medium text-[hsl(var(--fg))]">Email</div><div>hola@majesticweb.studio</div></div></div>
+              <div className="flex items-center gap-3 text-[hsl(var(--muted-fg))]"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))]"><Phone className="w-5 h-5" /></div><div><div className="text-sm font-medium text-[hsl(var(--fg))]">Teléfono</div><div>+34 612 345 678</div></div></div>
+              <div className="flex items-center gap-3 text-[hsl(var(--muted-fg))]"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))]"><MapPin className="w-5 h-5" /></div><div><div className="text-sm font-medium text-[hsl(var(--fg))]">Oficina</div><div>Madrid, España (Remoto Global)</div></div></div>
+            </div>
+          </div></GradientBorder>
+          <GradientBorder><div className="bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--accent))/0.1] border border-[hsl(var(--primary))/0.3] rounded-xl p-6">
+            <h4 className="font-semibold text-[hsl(var(--fg))] mb-2 flex items-center gap-2"><Clock className="w-4 h-4" /> Horario</h4>
+            <p className="text-[hsl(var(--fg))]">Lunes a Viernes: 9:00 - 19:00</p>
+            <p className="text-sm text-[hsl(var(--muted-fg))] mt-1">Consultas urgentes: Soporte 24/7 para clientes activos.</p>
+          </div></GradientBorder>
+        </motion.div>
+
+        {/* Multi-step Form */}
+        <motion.div className="lg:col-span-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <GradientBorder><div className="bg-[hsl(var(--card))] rounded-xl p-6 md:p-8">
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-[hsl(var(--muted-fg))] mb-2"><span>Paso {step} de 3</span><span>{Math.round((step / 3) * 100)}% completado</span></div>
+              <div className="h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden"><motion.div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" initial={{ width: '33%' }} animate={{ width: `${(step / 3) * 100}%` }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} /></div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <AnimatePresence mode="wait">
+                {step === 1 && (
+                  <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
+                    <h3 className="text-lg font-bold text-[hsl(var(--fg))]">1. Datos de contacto</h3>
+                    <div><label className="block text-sm font-medium text-[hsl(var(--fg))] mb-2">Nombre</label><input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className={inputClass('name')} placeholder="Tu nombre" /></div>
+                    {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                    <div><label className="block text-sm font-medium text-[hsl(var(--fg))] mb-2">Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className={inputClass('email')} placeholder="tu@email.com" /></div>
+                    {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                  </motion.div>
+                )}
+                {step === 2 && (
+                  <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
+                    <h3 className="text-lg font-bold text-[hsl(var(--fg))]">2. Tipo de proyecto</h3>
+                    <div><label className="block text-sm font-medium text-[hsl(var(--fg))] mb-2">¿Qué necesitas?</label>
+                      <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className={`${inputClass('type')} appearance-none`}>
+                        <option value="">Selecciona una opción</option>
+                        <option value="web">Sitio Web Corporativo</option>
+                        <option value="ecommerce">E-Commerce</option>
+                        <option value="app">Aplicación Web / SaaS</option>
+                        <option value="3d">Experiencia 3D / Interactiva</option>
+                        <option value="other">Otro</option>
+                      </select>
+                    </div>
+                    {errors.type && <p className="text-red-400 text-xs mt-1">{errors.type}</p>}
+                    <div><label className="block text-sm font-medium text-[hsl(var(--fg))] mb-2">Presupuesto orientativo (opcional)</label>
+                      <select value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} className={`${inputClass('budget')} appearance-none`}>
+                        <option value="">Selecciona rango</option>
+                        <option value="1k-3k">1.000€ - 3.000€</option>
+                        <option value="3k-6k">3.000€ - 6.000€</option>
+                        <option value="6k+">+6.000€</option>
+                      </select>
+                    </div>
+                  </motion.div>
+                )}
+                {step === 3 && (
+                  <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
+                    <h3 className="text-lg font-bold text-[hsl(var(--fg))]">3. Cuéntanos más</h3>
+                    <div><label className="block text-sm font-medium text-[hsl(var(--fg))] mb-2">Detalles del proyecto</label><textarea rows={4} value={form.message} onChange={e => setForm({...form, message: e.target.value})} className={`${inputClass('message')} resize-none`} placeholder="Describe tus objetivos, plazo ideal y cualquier referencia..." /></div>
+                    {errors.message && <p className="text-red-400 text-xs mt-1">{errors.message}</p>}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between pt-4 border-t border-[hsl(var(--border))] mt-6">
+                {step > 1 ? (
+                  <button type="button" onClick={prevStep} className="px-5 py-2.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--fg))] hover:bg-[hsl(var(--muted))] transition-all flex items-center gap-2"><ArrowLeft className="w-4 h-4" /> Atrás</button>
+                ) : <div />}
+                {step < 3 ? (
+                  <button type="button" onClick={nextStep} className="px-5 py-2.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))] hover:bg-[hsl(var(--primary))/0.9] transition-all flex items-center gap-2">Siguiente <ArrowRight className="w-4 h-4" /></button>
+                ) : (
+                  <button type="submit" disabled={status === 'sending'} className="hover-lift btn-press focus-ring px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg shadow-purple-500/20 transition-all flex items-center gap-2">{status === 'sending' ? 'Enviando...' : <>Enviar consulta <Send className="w-4 h-4" /></>}</button>
+                )}
+              </div>
+            </form>
+          </div></GradientBorder>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+export default function CustomCursor() {
+  const dotRef = useRef<HTMLDivElement>(null)
+  const ringRef = useRef<HTMLDivElement>(null)
+  const glowRef = useRef<HTMLDivElement>(null)
+  const pos = useRef({ mx: 0, my: 0, dx: 0, dy: 0, gx: 0, gy: 0 })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const loop = () => {
+      pos.current.dx += (pos.current.mx - pos.current.dx) * 0.18
+      pos.current.dy += (pos.current.my - pos.current.dy) * 0.18
+      pos.current.gx += (pos.current.mx - pos.current.gx) * 0.06
+      pos.current.gy += (pos.current.my - pos.current.gy) * 0.06
+
+      if (dotRef.current) dotRef.current.style.transform = `translate3d(${pos.current.mx}px, ${pos.current.my}px, 0)`
+      if (ringRef.current) ringRef.current.style.transform = `translate3d(${pos.current.dx}px, ${pos.current.dy}px, 0)`
+      if (glowRef.current) glowRef.current.style.transform = `translate3d(${pos.current.gx}px, ${pos.current.gy}px, 0)`
+      requestAnimationFrame(loop)
+    }
+
+    const move = (e: MouseEvent) => {
+      pos.current.mx = e.clientX
+      pos.current.my = e.clientY
+    }
+
+    const hoverIn = () => ringRef.current?.classList.add('hover')
+    const hoverOut = () => ringRef.current?.classList.remove('hover')
+
+    window.addEventListener('mousemove', move)
+    // Delay para evitar que el selector falle en hidratación
+    const initHover = setTimeout(() => {
+      document.querySelectorAll('a, button, input, textarea, [role="button"], .holo-card, .magnetic-wrap').forEach(el => {
+        el.addEventListener('mouseenter', hoverIn)
+        el.addEventListener('mouseleave', hoverOut)
+      })
+    }, 100)
+
+    requestAnimationFrame(loop)
+    return () => {
+      window.removeEventListener('mousemove', move)
+      clearTimeout(initHover)
+    }
+  }, [])
+
+  return (
+    <>
+      <div ref={dotRef} className="cursor-dot" />
+      <div ref={ringRef} className="cursor-ring" />
+      <div ref={glowRef} className="cursor-glow" />
+    </>
+  )
+}
+'use client'
+
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+
+export default function FloatingCTA() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY
+      const docHeight = document.documentElement.scrollHeight
+      const windowHeight = window.innerHeight
+      
+      // Mostrar tras 40% de scroll, ocultar al acercarse al footer (~últimos 350px)
+      const shouldShow = scrollY > docHeight * 0.4
+      const nearFooter = scrollY > docHeight - windowHeight - 350
+      setVisible(shouldShow && !nearFooter)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 hidden md:block"
+        >
+          <Link href="/contacto">
+            <button className="hover-lift btn-press focus-ring px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-xl shadow-purple-500/25 flex items-center gap-2 text-sm whitespace-nowrap">
+              ¿Hablamos de tu proyecto? <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+'use client'
+
+import Link from 'next/link'
+import { Code2 } from 'lucide-react'
+
+export default function Footer() {
+  const year = new Date().getFullYear()
+  return (
+    <footer className="relative z-10 border-t border-[hsl(var(--border))] bg-[hsl(var(--bg))/0.6] backdrop-blur-md py-10 mt-auto">
+      <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+            <Code2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-lg text-[hsl(var(--fg))]">MajesticWeb</span>
+        </div>
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-[hsl(var(--muted-fg))]">
+          <Link href="/servicios" className="hover:text-[hsl(var(--fg))] transition-colors">Servicios</Link>
+          <Link href="/portfolio" className="hover:text-[hsl(var(--fg))] transition-colors">Portfolio</Link>
+          <Link href="/sobre-nosotros" className="hover:text-[hsl(var(--fg))] transition-colors">Nosotros</Link>
+          <Link href="/contacto" className="hover:text-[hsl(var(--fg))] transition-colors">Contacto</Link>
+        </div>
+        <div className="text-xs text-[hsl(var(--muted-fg))]">© {year} MajesticWeb Studio.</div>
+      </div>
+    </footer>
+  )
+}
+import React from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
+import { Music, Volume2, VolumeX, Moon, Sun, Zap as ZapIcon } from 'lucide-react'
+import { ThemeContext } from '@/app/providers'
+
+/* 🖱️ CURSOR PERSONALIZADO */
+export const CustomCursor = () => {
+  const dot = useRef<HTMLDivElement>(null)
+  const ring = useRef<HTMLDivElement>(null)
+  const glow = useRef<HTMLDivElement>(null)
+  const pos = useRef({ mx: 0, my: 0, dx: 0, dy: 0, gx: 0, gy: 0 })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const loop = () => {
+      pos.current.dx += (pos.current.mx - pos.current.dx) * 0.18
+      pos.current.dy += (pos.current.my - pos.current.dy) * 0.18
+      pos.current.gx += (pos.current.mx - pos.current.gx) * 0.06
+      pos.current.gy += (pos.current.my - pos.current.gy) * 0.06
+      if (dot.current) dot.current.style.transform = `translate3d(${pos.current.mx}px, ${pos.current.my}px, 0)`
+      if (ring.current) ring.current.style.transform = `translate3d(${pos.current.dx}px, ${pos.current.dy}px, 0)`
+      if (glow.current) glow.current.style.transform = `translate3d(${pos.current.gx}px, ${pos.current.gy}px, 0)`
+      requestAnimationFrame(loop)
+    }
+    const move = (e: MouseEvent) => { pos.current.mx = e.clientX; pos.current.my = e.clientY }
+    const hIn = () => ring.current?.classList.add('hover')
+    const hOut = () => ring.current?.classList.remove('hover')
+    window.addEventListener('mousemove', move)
+    const init = setTimeout(() => {
+      document.querySelectorAll('a, button, input, textarea, [role="button"], .holo-card, .magnetic-wrap').forEach(el => {
+        el.addEventListener('mouseenter', hIn)
+        el.addEventListener('mouseleave', hOut)
+      })
+    }, 100)
+    requestAnimationFrame(loop)
+    return () => { window.removeEventListener('mousemove', move); clearTimeout(init) }
+  }, [])
+
+  return (
+    <>
+      <div ref={dot} className="cursor-dot" />
+      <div ref={ring} className="cursor-ring" />
+      <div ref={glow} className="cursor-glow" />
+    </>
+  )
+}
+
+/* ✨ TRAIL DE PARTÍCULAS */
+export const CursorTrail = ({ mobile }: { mobile: boolean }) => {
+  const last = useRef({ x: 0, y: 0, t: 0 })
+  const throttle = useRef(false)
+  useEffect(() => {
+    if (mobile) return
+    const move = (e: MouseEvent) => {
+      if (throttle.current) return
+      const now = Date.now()
+      const speed = Math.hypot(e.clientX - last.current.x, e.clientY - last.current.y) / (now - last.current.t) * 16
+      last.current = { x: e.clientX, y: e.clientY, t: now }
+      if (speed > 1.2) {
+        throttle.current = true
+        const el = document.createElement('div')
+        el.className = 'cursor-trail'
+        el.style.left = `${e.clientX + (Math.random() - 0.5) * 12}px`
+        el.style.top = `${e.clientY + (Math.random() - 0.5) * 12}px`
+        document.body.appendChild(el)
+        setTimeout(() => el.remove(), 700)
+        setTimeout(() => throttle.current = false, 35)
+      }
+    }
+    window.addEventListener('mousemove', move)
+    return () => window.removeEventListener('mousemove', move)
+  }, [mobile])
+  return null
+}
+
+/* 🌌 CANVAS DE FONDO (Estrellas / Figuras Reactivas) */
+export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: boolean }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const mouse = useRef({ x: -1000, y: -1000 })
+  const els = useRef<any[]>([])
+  const frame = useRef<number>(0)
+
+  useEffect(() => {
+    const c = canvasRef.current
+    if (!c) return
+    const ctx = c.getContext('2d')!
+    let w = c.width = window.innerWidth
+    let h = c.height = window.innerHeight
+
+    if (!els.current.length || els.current[0]?.theme !== theme) {
+      els.current = []
+      if (theme === 'light') {
+        for (let i = 0; i < (mobile ? 50 : 110); i++) {
+          els.current.push({ t: 'p', x: Math.random() * w, y: Math.random() * h, w: Math.random() * 70 + 20, h: Math.random() * 70 + 20, a: Math.random() * Math.PI, o: Math.random() * 0.15 + 0.05, p: 0, theme })
+        }
+      } else {
+        const hue = theme === 'cyber' ? '315, 85%, 60%' : '263, 70%, 60%'
+        for (let i = 0; i < (mobile ? 40 : 100); i++) {
+          els.current.push({ t: 'd', x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35, s: Math.random() * 2 + 0.8, o: Math.random() * 0.4 + 0.2, hue, theme })
+        }
+      }
+    }
+
+    const anim = () => {
+      ctx.clearRect(0, 0, w, h)
+      els.current.forEach(el => {
+        if (el.t === 'd') {
+          el.x += el.vx; el.y += el.vy
+          const dx = mouse.current.x - el.x, dy = mouse.current.y - el.y, dist = Math.hypot(dx, dy)
+          if (dist < 100) { el.vx -= dx * 0.0004; el.vy -= dy * 0.0004 }
+          if (el.x < 0 || el.x > w) el.vx *= -1
+          if (el.y < 0 || el.y > h) el.vy *= -1
+          ctx.beginPath(); ctx.arc(el.x, el.y, el.s, 0, Math.PI * 2)
+          ctx.fillStyle = `hsla(${el.hue}, ${el.o})`; ctx.fill()
+        } else {
+          const mx = el.x + el.w / 2, my = el.y + el.h / 2, dist = Math.hypot(mx - mouse.current.x, my - mouse.current.y)
+          const tp = dist < 150 ? 1 - dist / 150 : 0; el.p += (tp - el.p) * 0.15
+          const pushX = (el.p > 0) ? (mouse.current.x - mx) * el.p * 0.4 : 0
+          const pushY = (el.p > 0) ? (mouse.current.y - my) * el.p * 0.4 : 0
+          const op = el.o * (1 - el.p * 0.5)
+          ctx.save(); ctx.translate(el.x + el.w / 2 + pushX, el.y + el.h / 2 + pushY); ctx.rotate(el.a)
+          ctx.strokeStyle = `hsla(222, 47%, 25%, ${op})`; ctx.lineWidth = 1.2; ctx.beginPath()
+          if (el.t === 'p') { ctx.moveTo(-el.w / 2, 0); ctx.lineTo(0, -el.h / 2); ctx.lineTo(el.w / 2, 0); ctx.lineTo(0, el.h / 2); ctx.closePath() }
+          else { ctx.moveTo(-el.w / 2, -el.h / 2); ctx.lineTo(el.w / 2, el.h / 2) }
+          ctx.stroke(); ctx.restore()
+        }
+      })
+      frame.current = requestAnimationFrame(anim)
+    }
+    anim()
+    const res = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight }
+    const mv = (e: MouseEvent) => { mouse.current.x = e.clientX; mouse.current.y = e.clientY }
+    window.addEventListener('resize', res)
+    window.addEventListener('mousemove', mv)
+    return () => { cancelAnimationFrame(frame.current); window.removeEventListener('resize', res); window.removeEventListener('mousemove', mv) }
+  }, [theme, mobile])
+
+  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" />
+}
+
+/* 🎨 LUZ AMBIENTAL */
+export const AuroraBackground = () => {
+  const [c, setC] = useState({ x: '50%', y: '50%' })
+  useEffect(() => {
+    const m = (e: MouseEvent) => setC({ x: `${e.clientX}px`, y: `${e.clientY}px` })
+    window.addEventListener('mousemove', m)
+    return () => window.removeEventListener('mousemove', m)
+  }, [])
+  return <div className="aurora-bg" style={{ '--mx': c.x, '--my': c.y } as React.CSSProperties} />
+}
+
+/* 🎬 CINEMÁTICOS */
+export const CinematicGrain = () => <div className="cinematic-grain" />
+export const CinematicVignette = () => <div className="cinematic-vignette" />
+
+/* 🌊 LÍQUIDO */
+export const LiquidEffect = () => {
+  const [r, setR] = useState<{ id: number; x: number; y: number }[]>([])
+  useEffect(() => {
+    const d = (e: PointerEvent) => {
+      const id = Date.now()
+      setR(p => [...p, { id, x: e.clientX, y: e.clientY }])
+      setTimeout(() => setR(p => p.filter(i => i.id !== id)), 800)
+    }
+    window.addEventListener('pointerdown', d)
+    return () => window.removeEventListener('pointerdown', d)
+  }, [])
+  return <>{r.map(i => (<div key={i.id} className="liquid-ripple" style={{ left: i.x, top: i.y, width: 120, height: 120 }} />))}</>
+}
+
+/* 🎨 SWITCHER */
+export const ThemeSwitcher = () => {
+  const { theme, setTheme } = useContext(ThemeContext)
+  type ThemeId = 'dark' | 'light' | 'cyber'
+  const themes: { id: ThemeId; icon: React.ReactNode }[] = [
+    { id: 'dark', icon: <Moon className="w-4 h-4" /> },
+    { id: 'light', icon: <Sun className="w-4 h-4" /> },
+    { id: 'cyber', icon: <ZapIcon className="w-4 h-4" /> }
+  ]
+  return (
+    <div className="fixed bottom-6 left-6 z-[100] flex gap-2 p-1 rounded-full bg-[hsl(var(--card))/0.5] border border-[hsl(var(--border))] backdrop-blur-md shadow-lg pointer-events-auto">
+      {themes.map(t => (
+        <button key={t.id} onClick={() => setTheme(t.id)} className={`p-2 rounded-full transition-all ${theme === t.id ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))]' : 'text-[hsl(var(--muted-fg))] hover:text-[hsl(var(--fg))]'}`}>
+          {t.icon}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* 🎵 AUDIO REACTIVO (Fix TS: o.current null check en setTimeout) */
+export const ReactiveAudio = () => {
+  const [a, s] = useState(false)
+  const [m, sm] = useState(false)
+  const c = useRef<AudioContext | null>(null)
+  const g = useRef<GainNode | null>(null)
+  const o = useRef<OscillatorNode | null>(null)
+  const t = useRef<ReturnType<typeof setTimeout>>()
+
+  const init = async () => {
+    if (c.current) return
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      const ctx = new AudioCtx()
+      c.current = ctx
+      const gn = ctx.createGain(); gn.gain.value = 0.02; g.current = gn
+      const os = ctx.createOscillator(); os.type = 'sine'; os.frequency.value = 85; o.current = os
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600
+      os.connect(f); f.connect(gn); gn.connect(ctx.destination); os.start()
+      gn.gain.setTargetAtTime(0.02, ctx.currentTime, 0.1); s(true)
+    } catch (e) { console.warn('Audio bloqueado:', e) }
+  }
+
+  const toggle = async () => {
+    if (!c.current) { await init(); return }
+    if (c.current.state === 'suspended') await c.current.resume()
+    s(prev => !prev)
+  }
+
+  const mute = () => {
+    if (!g.current || !c.current) return
+    sm(prev => !prev)
+    g.current.gain.setTargetAtTime(!m ? 0.02 : 0, c.current.currentTime, 0.05)
+  }
+
+  useEffect(() => {
+    let lx = 0, ly = 0
+    const mv = (e: MouseEvent) => {
+      if (!a || m || !c.current || !g.current || !o.current) return
+      clearTimeout(t.current)
+      const sp = Math.hypot(e.clientX - lx, e.clientY - ly)
+      lx = e.clientX; ly = e.clientY
+      g.current.gain.setTargetAtTime(Math.min(0.09, sp * 0.0008) + 0.02, c.current.currentTime, 0.05)
+      o.current.frequency.setTargetAtTime(85 + Math.min(70, sp * 0.9), c.current.currentTime, 0.1)
+      t.current = setTimeout(() => {
+        if (!g.current || !c.current || !o.current) return
+        g.current.gain.setTargetAtTime(0.02, c.current.currentTime, 0.2)
+        o.current.frequency.setTargetAtTime(85, c.current.currentTime, 0.3)
+      }, 250)
+    }
+    window.addEventListener('mousemove', mv)
+    return () => { window.removeEventListener('mousemove', mv); clearTimeout(t.current) }
+  }, [a, m])
+
+  useEffect(() => () => { o.current?.stop(); c.current?.close() }, [])
+
+  return (
+    <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 pointer-events-auto">
+      {a && (
+        <button onClick={mute} className="p-2.5 rounded-full bg-neutral-900/60 border border-white/10 hover:bg-neutral-800/80 transition-all backdrop-blur-md text-white shadow-lg cursor-pointer">
+          {m ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
+      )}
+      <button onClick={toggle} className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-lg flex items-center gap-2 cursor-pointer ${a ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20' : 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-500/25'}`}>
+        <Music className="w-3.5 h-3.5" /> {a ? (m ? 'Muteado' : 'Activo') : 'Activar Audio'}
+      </button>
+    </div>
+  )
+}
+'use client'
+
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { SplineScene } from '@/components/ui/splite'
+
+export default function GlobalRobot() {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85, y: -20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: 1.8, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      // ✅ Centrado horizontal, justo debajo del navbar
+      className="fixed top-[76px] left-1/2 -translate-x-1/2 z-30 hidden md:block"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+    >
+      <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-md transition-all duration-300 ${
+        isHovered 
+          ? 'w-[150px] h-[150px] border-[hsl(var(--primary))/0.4] shadow-xl shadow-purple-500/25' 
+          : 'w-[120px] h-[120px] border-[hsl(var(--border))/0.3] shadow-lg'
+      }`}>
+        <SplineScene className="w-full h-full" />
+      </div>
+    </motion.div>
+  )
+}
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { Code2, Menu, X } from 'lucide-react'
+
+export default function Navbar() {
+  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
+  
+  const links = [
+  { href: '/', label: 'Inicio' },
+  { href: '/servicios', label: 'Servicios' },
+  { href: '/seo', label: 'SEO' },
+  { href: '/ux-ui', label: 'UX/UI' },
+  { href: '/rendimiento-web', label: 'Velocidad' },
+  { href: '/portfolio', label: 'Portfolio' },
+  { href: '/contacto', label: 'Contacto' }
+]
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-[60] px-4 py-4 backdrop-blur-md bg-[hsl(var(--bg))/0.6] border-b border-[hsl(var(--border))/0.3]">
+      <div className="container mx-auto flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 group z-20" onClick={() => setIsOpen(false)}>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+            <Code2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-lg text-[hsl(var(--fg))]">MajesticWeb</span>
+        </Link>
+
+        {/* Desktop */}
+        <div className="hidden md:flex items-center gap-1">
+          {links.map(l => {
+            const isActive = pathname === l.href
+            return (
+              <Link key={l.href} href={l.href}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))]' : 'text-[hsl(var(--muted-fg))] hover:text-[hsl(var(--fg))] hover:bg-[hsl(var(--muted))/0.5]'}`}>
+                {l.label}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Mobile Toggle */}
+        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2 text-[hsl(var(--fg))] z-20 rounded-lg hover:bg-[hsl(var(--muted))/0.3] transition-colors">
+          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-[hsl(var(--card))/0.95] backdrop-blur-xl border-b border-[hsl(var(--border))] py-4 px-4 flex flex-col gap-2 animate-in slide-in-from-top-2">
+          {links.map(l => {
+            const isActive = pathname === l.href
+            return (
+              <Link key={l.href} href={l.href} onClick={() => setIsOpen(false)}
+                className={`px-4 py-3 rounded-lg text-base font-medium transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-fg))]' : 'text-[hsl(var(--muted-fg))] hover:bg-[hsl(var(--muted))/0.4]'}`}>
+                {l.label}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </nav>
+  )
+}
+'use client'
+
+import { motion } from 'framer-motion'
+
+interface PageHeaderProps {
+  title: string
+  subtitle?: string
+}
+
+export default function PageHeader({ title, subtitle }: PageHeaderProps) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+      className="pt-28 pb-12 text-center"
+    >
+      <h1 className="text-3xl md:text-5xl font-bold text-[hsl(var(--fg))] mb-4">{title}</h1>
+      {subtitle && <p className="text-lg text-[hsl(var(--muted-fg))] max-w-2xl mx-auto">{subtitle}</p>}
+      <div className="mt-6 w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full" />
+    </motion.div>
+  )
+}
+'use client'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { Zap, Clock, Monitor, ArrowRight, CheckCircle2 } from 'lucide-react'
+
+const metrics = [
+  { icon: <Zap className="w-6 h-6" />, title: "LCP (Largest Contentful Paint)", desc: "Tiempo en cargar el elemento principal. <2.5s es bueno. >4s pierde al 53% de usuarios." },
+  { icon: <Clock className="w-6 h-6" />, title: "INP (Interaction to Next Paint)", desc: "Tiempo de respuesta a clics/scroll. <200ms se percibe como instantáneo." },
+  { icon: <Monitor className="w-6 h-6" />, title: "CLS (Cumulative Layout Shift)", desc: "Estabilidad visual. <0.1 evita saltos molestos que generan clics erróneos y abandono." }
+]
+
+export default function PerformanceContent() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-20">
+      <PageHeader title="Velocidad y Core Web Vitals" subtitle="La velocidad no es un lujo. Es tu primer filtro de conversión. Optimizamos cada milisegundo." />
+      <section className="max-w-4xl mx-auto text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">Por qué la velocidad define tu negocio online</h2>
+        <p className="text-[hsl(var(--muted-fg))] leading-relaxed mb-6">Google mide la experiencia del usuario a través de <strong>Core Web Vitals</strong>. 100ms de retraso = -1% en ventas. Aplicamos compresión moderna, lazy loading, critical CSS, code splitting y edge caching.</p>
+      </section>
+      <section>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-[hsl(var(--fg))]">Métricas que Optimizamos</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {metrics.map((m, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+              <GradientBorder className="h-full"><div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col">
+                <div className="w-12 h-12 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))] mb-3">{m.icon}</div>
+                <h3 className="text-lg font-bold text-[hsl(var(--fg))] mb-2">{m.title}</h3>
+                <p className="text-sm text-[hsl(var(--muted-fg))] flex-1">{m.desc}</p>
+              </div></GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center py-10">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">¿Tu web tarda más de 3s en cargar?</h2>
+        <p className="text-[hsl(var(--muted-fg))] max-w-xl mx-auto mb-6">Auditamos tu rendimiento y te entregamos un plan de acción priorizado.</p>
+        <Link href="/contacto"><button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/20 group">Solicitar Test de Velocidad <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></Link>
+      </motion.div>
+            {/* 🔗 ENLAZADO INTERNO ESTRATÉGICO */}
+      <section className="max-w-4xl mx-auto pt-10 border-t border-[hsl(var(--border))]">
+        <h3 className="text-xl font-bold mb-4 text-[hsl(var(--fg))]">Recursos relacionados</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <a href="/seo" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">🔍 SEO y velocidad: cómo Google usa LCP para rankear</a>
+          <a href="/ux-ui" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">🎨 UX/UI: convierte la velocidad en retención real</a>
+        </div>
+      </section>
+    </div>
+  )
+}
+'use client'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { Search, BarChart3, Code2, FileText, ArrowRight, CheckCircle2 } from 'lucide-react'
+
+const steps = [
+  { icon: <Search className="w-6 h-6" />, title: "Auditoría Técnica", desc: "Detectamos errores de rastreo, indexación, canibalización y estructura que frenan tu crecimiento." },
+  { icon: <FileText className="w-6 h-6" />, title: "Estrategia de Keywords", desc: "Investigamos intención de búsqueda, volumen y competencia para atacar términos con ROI real." },
+  { icon: <Code2 className="w-6 h-6" />, title: "SEO On-Page & Técnico", desc: "Optimizamos meta-tags, schema markup, velocidad, mobile-friendliness y arquitectura de enlaces." },
+  { icon: <BarChart3 className="w-6 h-6" />, title: "Contenido y Autoridad", desc: "Creamos y estructuramos contenido que responde a consultas reales y atrae backlinks naturales." }
+]
+const faqs = [
+  { q: "¿Cuánto tiempo tarda en verse resultados con SEO?", a: "El SEO es una estrategia a medio-largo plazo. Los primeros movimientos técnicos se reflejan en 2-4 semanas. El crecimiento orgánico sostenido suele consolidarse entre los 3 y 6 meses." },
+  { q: "¿El SEO sigue funcionando en 2024/2025?", a: "Más que nunca. Google prioriza la experiencia del usuario, la autoridad temática y la calidad del contenido. Las webs optimizadas técnicamente y con contenido relevante dominan los resultados." },
+  { q: "¿Trabajáis con WordPress, Shopify o desarrollos a medida?", a: "Sí. Adaptamos la estrategia a tu stack. En WordPress optimizamos plugins, estructura y rendimiento. En Shopify trabajamos con themes personalizados y apps de SEO. En desarrollos Next.js/React aplicamos SEO técnico avanzado (SSR, ISR, metadata API)." }
+]
+
+export default function SeoContent() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-20">
+      <PageHeader title="SEO Técnico y Estratégico" subtitle="No basta con que tu web sea bonita. Necesita ser encontrada. Te posicionamos donde tus clientes buscan." />
+      <section className="max-w-4xl mx-auto text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">Por qué el SEO es tu mayor activo digital</h2>
+        <p className="text-[hsl(var(--muted-fg))] leading-relaxed">El <strong>SEO</strong> no es magia. Es ingeniería aplicada a la visibilidad. Mientras la publicidad de pago se apaga, el SEO construye <strong>tráfico orgánico recurrente</strong>. Optimizamos cada capa: infraestructura, semántica y contenido.</p>
+      </section>
+      <section>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-[hsl(var(--fg))]">Nuestro Proceso</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {steps.map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+              <GradientBorder className="h-full"><div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col">
+                <div className="w-12 h-12 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))] mb-3">{s.icon}</div>
+                <h3 className="text-lg font-bold text-[hsl(var(--fg))] mb-2">{s.title}</h3>
+                <p className="text-sm text-[hsl(var(--muted-fg))] flex-1">{s.desc}</p>
+              </div></GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+      <section className="bg-[hsl(var(--card))/0.2] border border-[hsl(var(--border))] rounded-2xl p-6 md:p-10">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-[hsl(var(--fg))]">Preguntas Frecuentes</h2>
+        <div className="space-y-4 max-w-3xl mx-auto">
+          {faqs.map((faq, i) => (
+            <GradientBorder key={i}><div className="bg-[hsl(var(--card))] rounded-xl p-5">
+              <h3 className="text-lg font-semibold text-[hsl(var(--fg))] mb-2 flex items-start gap-2"><CheckCircle2 className="w-5 h-5 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" /> {faq.q}</h3>
+              <p className="text-sm text-[hsl(var(--muted-fg))] leading-relaxed pl-7">{faq.a}</p>
+            </div></GradientBorder>
+          ))}
+        </div>
+      </section>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center py-10">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">¿Tu web no aparece en Google?</h2>
+        <p className="text-[hsl(var(--muted-fg))] max-w-xl mx-auto mb-6">Auditoría gratuita de 15 puntos + plan de acción.</p>
+        <Link href="/contacto"><button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/20 group">Solicitar Auditoría SEO <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></Link>
+      </motion.div>
+         {/* 🔗 ENLAZADO INTERNO ESTRATÉGICO */}
+      <section className="max-w-4xl mx-auto pt-10 border-t border-[hsl(var(--border))]">
+        <h3 className="text-xl font-bold mb-4 text-[hsl(var(--fg))]">Recursos relacionados</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <a href="/ux-ui" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">🎨 Diseño UX/UI que retiene el tráfico que el SEO trae</a>
+          <a href="/rendimiento-web" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">⚡ Velocidad web: el factor técnico que Google premia</a>
+        </div>
+      </section>
+    </div>
+  )
+}
+'use client'
+
+import { useRef, useCallback, ReactNode } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
+
+export const PageHeader = ({ title, subtitle }: { title: string; subtitle?: string }) => (
+  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="pt-28 pb-12 text-center">
+    <h1 className="text-3xl md:text-5xl font-bold text-[hsl(var(--fg))] mb-4">{title}</h1>
+    {subtitle && <p className="text-lg text-[hsl(var(--muted-fg))] max-w-2xl mx-auto">{subtitle}</p>}
+    <div className="mt-6 w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full" />
+  </motion.div>
+)
+
+export const MagneticButton = ({ children, className = '' }: { children: ReactNode; className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const move = useCallback((e: React.MouseEvent) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    ref.current.style.transform = `translate(${(e.clientX - rect.left - rect.width/2)*0.2}px, ${(e.clientY - rect.top - rect.height/2)*0.2}px)`
+  }, [])
+  const leave = useCallback(() => { if (ref.current) ref.current.style.transform = 'translate(0,0)' }, [])
+  return <div ref={ref} onMouseMove={move} onMouseLeave={leave} className={`magnetic-wrap inline-block ${className}`}>{children}</div>
+}
+
+export const HoloCard = ({ children, className = '' }: { children: ReactNode; className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const move = useCallback((e: React.MouseEvent) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    ref.current.style.setProperty('--mx', `${((e.clientX - rect.left)/rect.width)*100}%`)
+    ref.current.style.setProperty('--my', `${((e.clientY - rect.top)/rect.height)*100}%`)
+  }, [])
+  return <div ref={ref} onMouseMove={move} className={`holo-card relative ${className}`}>{children}</div>
+}
+
+export const GradientBorder = ({ children, className = '' }: { children: ReactNode; className?: string }) => (
+  <div className={`gradient-border ${className}`}>{children}</div>
+)
+
+export const ParallaxLayer = ({ children, speed = 0.5, className = '' }: { children: ReactNode; speed?: number; className?: string }) => {
+  const { scrollYProgress } = useScroll()
+  const y = useTransform(scrollYProgress, [0, 1], [0, -speed * 200])
+  return <motion.div className={className} style={{ y }}>{children}</motion.div>
+}
+'use client'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { PageHeader, GradientBorder } from '@/components/ui-premium'
+import { Layout, MousePointer2, Eye, Users, ArrowRight } from 'lucide-react'
+
+const pillars = [
+  { icon: <Users className="w-6 h-6" />, title: "Investigación de Usuario", desc: "Entendemos tu audiencia: comportamientos, dolores, motivaciones y flujos de decisión reales." },
+  { icon: <Layout className="w-6 h-6" />, title: "Arquitectura de Información", desc: "Estructuramos contenido y navegación para que encontrar lo necesario sea instintivo, no un puzzle." },
+  { icon: <Eye className="w-6 h-6" />, title: "Diseño Visual & Branding", desc: "Tipografía, color, espaciado y jerarquía visual alineados con tu identidad y optimizados para legibilidad." },
+  { icon: <MousePointer2 className="w-6 h-6" />, title: "Prototipado & Testing", desc: "Iteramos en Figma antes de escribir una línea de código. Validamos con usuarios reales para reducir riesgos." }
+]
+
+export default function UxUiContent() {
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-20">
+      <PageHeader title="Diseño UX/UI Centrado en Conversión" subtitle="Una web bonita que no vende es decoración. Diseñamos experiencias que guían, convencen y convierten." />
+      <section className="max-w-4xl mx-auto text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">UX vs UI: ¿Por qué importan ambas?</h2>
+        <p className="text-[hsl(var(--muted-fg))] leading-relaxed mb-6">El <strong>UX</strong> se preocupa por cómo se siente y navega el usuario. El <strong>UI</strong> se encarga de cómo se ve y comunica visualmente. Juntos, reducen la tasa de rebote y disparan las conversiones.</p>
+      </section>
+      <section>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-[hsl(var(--fg))]">Los 4 Pilares de Nuestro Diseño</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {pillars.map((p, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+              <GradientBorder className="h-full"><div className="bg-[hsl(var(--card))] rounded-xl p-6 h-full flex flex-col">
+                <div className="w-12 h-12 rounded-lg bg-[hsl(var(--primary))/0.15] flex items-center justify-center text-[hsl(var(--primary))] mb-3">{p.icon}</div>
+                <h3 className="text-lg font-bold text-[hsl(var(--fg))] mb-2">{p.title}</h3>
+                <p className="text-sm text-[hsl(var(--muted-fg))] flex-1">{p.desc}</p>
+              </div></GradientBorder>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center py-10">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-[hsl(var(--fg))]">¿Tu web pierde visitantes por mala usabilidad?</h2>
+        <p className="text-[hsl(var(--muted-fg))] max-w-xl mx-auto mb-6">Auditoría UX gratuita + propuesta de rediseño centrada en objetivos.</p>
+        <Link href="/contacto"><button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/20 group">Solicitar Auditoría UX <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></Link>
+      </motion.div>
+            {/* 🔗 ENLAZADO INTERNO ESTRATÉGICO */}
+      <section className="max-w-4xl mx-auto pt-10 border-t border-[hsl(var(--border))]">
+        <h3 className="text-xl font-bold mb-4 text-[hsl(var(--fg))]">Recursos relacionados</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <a href="/seo" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">🔍 SEO Técnico: asegura que tu diseño sea encontrado</a>
+          <a href="/rendimiento-web" className="link-underline text-[hsl(var(--primary))] hover:text-[hsl(var(--accent))] transition-colors">⚡ Core Web Vitals: velocidad que complementa la UX</a>
+        </div>
+      </section>
+    </div>
+  )
+}

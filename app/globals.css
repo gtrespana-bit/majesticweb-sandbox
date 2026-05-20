@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 VARIABLES DE TEMA */
+:root, [data-theme="dark"] {
+  --bg: 215 28% 9%;
+  --fg: 210 20% 96%;
+  --card: 215 25% 13%;
+  --card-fg: 210 40% 96%;
+  --primary: 243 75% 62%;
+  --primary-fg: 0 0% 100%;
+  --muted: 215 20% 18%;
+  --muted-fg: 215 10% 65%;
+  --border: 215 20% 24%;
+  --accent: 270 65% 55%;
+}
+[data-theme="light"] {
+  --bg: 210 20% 98%;
+  --fg: 222 47% 8%;
+  --card: 0 0% 100%;
+  --card-fg: 222 47% 8%;
+  --primary: 221 83% 45%;
+  --primary-fg: 0 0% 100%;
+  --muted: 210 15% 92%;
+  --muted-fg: 215 16% 35%;
+  --border: 214 20% 88%;
+  --accent: 195 80% 45%;
+}
+[data-theme="cyber"] {
+  --bg: 280 30% 6%;
+  --fg: 0 0% 95%;
+  --card: 280 25% 11%;
+  --card-fg: 0 0% 95%;
+  --primary: 315 85% 60%;
+  --primary-fg: 0 0% 100%;
+  --muted: 280 20% 16%;
+  --muted-fg: 270 20% 70%;
+  --border: 280 20% 22%;
+  --accent: 175 90% 50%;
+}
+
+@layer base {
+  * { border-color: hsl(var(--border)); }
+  body {
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    background-color: hsl(var(--bg));
+    color: hsl(var(--fg));
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+/* 🎬 CINEMÁTICO + UI */
+.cinematic-grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.035; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+.cinematic-vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 4;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.5) 100%);
+}
+
+/* 🖱️ CURSOR BASE & FALLBACKS */
+.cursor-dot, .cursor-ring, .cursor-glow {
+  position: fixed; top: 0; left: 0; pointer-events: none; z-index: 99999; will-change: transform;
+}
+.cursor-dot { width: 5px; height: 5px; background: hsl(var(--fg)); border-radius: 50%; transform: translate(-50%, -50%); }
+.cursor-ring { width: 20px; height: 20px; border: 1.5px solid hsla(var(--fg), 0.5); border-radius: 50%; transform: translate(-50%, -50%); transition: width 0.25s, height 0.25s, border-color 0.25s; }
+.cursor-ring.hover { width: 44px; height: 44px; border-color: hsl(var(--primary)); }
+.cursor-glow { width: 350px; height: 350px; background: radial-gradient(circle, hsla(var(--primary), 0.18) 0%, transparent 75%); transform: translate(-50%, -50%); }
+
+/* 🌊 EFECTO LÍQUIDO */
+.liquid-ripple {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 10;
+  background: radial-gradient(circle, hsla(var(--primary), 0.4) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: liquid-expand 0.8s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes liquid-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+/* 🎨 LUZ AMBIENTAL */
+.aurora-bg {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.6;
+  background: 
+    radial-gradient(1000px circle at var(--mx, 50%) var(--my, 50%), hsla(var(--primary), 0.15), transparent 50%),
+    radial-gradient(800px circle at calc(var(--mx, 50%) + 10%) calc(var(--my, 50%) - 10%), hsla(var(--accent), 0.1), transparent 50%);
+  filter: blur(60px); transition: background 0.3s;
+}
+
+/* 🌈 BORDE GRADIENTE PREMIUM (Flujo Lineal Continuo - Estable) */
+.gradient-border {
+  position: relative;
+  border-radius: 1rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--accent)) 50%,
+    hsl(var(--primary)) 100%
+  );
+  background-size: 300% 100%;
+  animation: border-flow 5s linear infinite;
+  isolation: isolate;
+}
+.gradient-border:hover {
+  animation-play-state: paused;
+}
+.gradient-border > * {
+  position: relative;
+  z-index: 1;
+  background: hsl(var(--card));
+  border-radius: inherit;
+  height: 100%;
+  width: 100%;
+}
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* ✨ CURSOR TRAIL */
+.cursor-trail {
+  position: fixed; width: 5px; height: 5px; background: hsl(var(--primary));
+  border-radius: 50%; pointer-events: none; z-index: 99998;
+  opacity: 0; transform: translate(-50%, -50%) scale(0);
+  animation: fade-trail 0.5s ease-out forwards;
+}
+@keyframes fade-trail {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) translateY(-8px); }
+}
+
+/* 🃏 TARJETAS HOLOGRÁFICAS */
+.holo-card {
+  transform-style: preserve-3d; transform: perspective(1000px);
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.holo-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.06), transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.holo-card:hover::before { opacity: 1; }
+
+/* 📏 SCROLLBAR + UTILS */
+html { scroll-behavior: smooth; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--bg)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
+
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+/* 🖥️ MEDIA QUERIES (Desktop vs Mobile) */
+@media (min-width: 769px) { body { cursor: none; } }
+@media (max-width: 768px) {
+  .cursor-dot, .cursor-ring, .cursor-glow, .cursor-trail { display: none; }
+  body { cursor: auto; }
+}
+
+/* 🎨 MICRO-INTERACCIONES PREMIUM */
+.hover-lift {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 14px 28px -10px hsl(var(--primary)/0.28);
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--primary)/0.45);
+}
+.btn-press:active {
+  transform: scale(0.96);
+  transition: transform 0.12s ease;
+}
+.link-underline {
+  position: relative;
+  text-decoration: none;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-underline:hover::after {
+  width: 100%;
+}
