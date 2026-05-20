@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { useState, useEffect, useRef, useContext } from 'react'
 import { Music, Volume2, VolumeX, Moon, Sun, Zap as ZapIcon } from 'lucide-react'
@@ -188,7 +190,7 @@ export const ThemeSwitcher = () => {
   )
 }
 
-/* 🎵 AUDIO REACTIVO (Fix TS: o.current null check en setTimeout) */
+/* 🎵 AUDIO REACTIVO */
 export const ReactiveAudio = () => {
   const [a, s] = useState(false)
   const [m, sm] = useState(false)
