@@ -114,7 +114,7 @@ export default function EarthScene() {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
-      targetRotY += 0.0005 // Auto-rotación suave
+      targetRotY += 0.0005
       earthGroup.rotation.x += (targetRotX - earthGroup.rotation.x) * 0.15
       earthGroup.rotation.y += (targetRotY - earthGroup.rotation.y) * 0.15
 
@@ -127,7 +127,7 @@ export default function EarthScene() {
     }
     animate()
 
-    // 5. GSAP ScrollTrigger (Movimiento de cámara por sección)
+    // 5. GSAP ScrollTrigger
     const sections = document.querySelectorAll('section')
     sections.forEach((_, index) => {
       const trigger = ScrollTrigger.create({
@@ -142,10 +142,10 @@ export default function EarthScene() {
 
     const moveCamera = (index: number) => {
       const positions = [
-        { z: 5, x: 0, y: 0 },      // Hero
-        { z: 6.5, x: 2.5, y: 0.5 }, // Servicios
-        { z: 5, x: -2.5, y: 0 },    // Portfolio
-        { z: 5.5, x: 0, y: 0 }      // Contacto
+        { z: 5, x: 0, y: 0 },
+        { z: 6.5, x: 2.5, y: 0.5 },
+        { z: 5, x: -2.5, y: 0 },
+        { z: 5.5, x: 0, y: 0 }
       ]
       const pos = positions[index] || positions[0]
       gsap.to(camera.position, { z: pos.z, x: pos.x, y: pos.y, duration: 2.5, ease: 'power3.inOut' })
@@ -159,7 +159,7 @@ export default function EarthScene() {
     }
     window.addEventListener('resize', handleResize)
 
-    // 7. Cleanup estricto (Cero memory leaks)
+    // 7. Cleanup estricto
     return () => {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('resize', handleResize)
@@ -173,6 +173,16 @@ export default function EarthScene() {
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry?.dispose()
-          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
-          else obj.material?.dispose()
-       
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach(m => m.dispose())
+          } else {
+            obj.material?.dispose()
+          }
+        }
+      })
+      renderer.dispose()
+    }
+  }, [])
+
+  return <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-none" />
+}
