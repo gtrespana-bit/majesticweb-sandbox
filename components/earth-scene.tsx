@@ -127,20 +127,8 @@ export default function EarthScene() {
     }
     animate()
 
-    // 5. GSAP ScrollTrigger
-    const sections = document.querySelectorAll('section')
-    sections.forEach((_, index) => {
-      const trigger = ScrollTrigger.create({
-        trigger: sections[index],
-        start: 'top center',
-        end: 'bottom center',
-        onEnter: () => moveCamera(index),
-        onEnterBack: () => moveCamera(index)
-      })
-      triggersRef.current.push(trigger)
-    })
-
-    const moveCamera = (index: number) => {
+    // ✅ 5. FUNCIÓN MOVER CÁMARA (DEFINIDA ANTES DE SCROLLTRIGGER)
+    function moveCamera(index: number) {
       const positions = [
         { z: 5, x: 0, y: 0 },
         { z: 6.5, x: 2.5, y: 0.5 },
@@ -151,7 +139,22 @@ export default function EarthScene() {
       gsap.to(camera.position, { z: pos.z, x: pos.x, y: pos.y, duration: 2.5, ease: 'power3.inOut' })
     }
 
-    // 6. Resize
+    // ✅ 6. GSAP ScrollTrigger (AHORA SÍ PUEDE ACCEDER A moveCamera)
+    const sections = document.querySelectorAll('section')
+    if (sections.length > 0) {
+      sections.forEach((_, index) => {
+        const trigger = ScrollTrigger.create({
+          trigger: sections[index],
+          start: 'top center',
+          end: 'bottom center',
+          onEnter: () => moveCamera(index),
+          onEnterBack: () => moveCamera(index)
+        })
+        triggersRef.current.push(trigger)
+      })
+    }
+
+    // 7. Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight
       camera.updateProjectionMatrix()
@@ -159,7 +162,7 @@ export default function EarthScene() {
     }
     window.addEventListener('resize', handleResize)
 
-    // 7. Cleanup estricto
+    // 8. Cleanup estricto
     return () => {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('resize', handleResize)
