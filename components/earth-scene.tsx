@@ -240,10 +240,10 @@ export default function EarthScene() {
       earthGroup.rotation.x += (targetRotRef.current.x - earthGroup.rotation.x) * 0.15
       earthGroup.rotation.y += (targetRotRef.current.y - earthGroup.rotation.y) * 0.15
 
-      cloudGroup.children.forEach((child, i) => { child.rotation.y = time * (0.006 + i * 0.003) })
+      cloudGroup.children.forEach((child, i) => { if (child instanceof THREE.Mesh) child.rotation.y = time * (0.006 + i * 0.003) })
       
       cityGroup.children.forEach(child => {
-        if (child.userData?.type === 'pulse') {
+        if (child.userData?.type === 'pulse' && child instanceof THREE.Mesh) {
           const t = child.userData.phase + time * 2
           const scale = 1 + Math.sin(t) * 0.6
           child.scale.setScalar(scale)
@@ -371,12 +371,12 @@ export default function EarthScene() {
       earthRef.current.material = nightMatRef.current || earthRef.current.material
       sunLightRef.current.intensity = 0.05
       ambientLightRef.current.intensity = 0.1
-      cloudGroupRef.current.children.forEach((c, i) => { if (c.material) c.material.opacity = i === 0 ? 0.2 : 0.1 })
+      cloudGroupRef.current.children.forEach((c, i) => { if (c instanceof THREE.Mesh && c.material) c.material.opacity = i === 0 ? 0.2 : 0.1 })
     } else {
       earthRef.current.material = dayMatRef.current || earthRef.current.material
       sunLightRef.current.intensity = 1.8
       ambientLightRef.current.intensity = 0.5
-      cloudGroupRef.current.children.forEach((c, i) => { if (c.material) c.material.opacity = i === 0 ? 0.8 : 0.3 })
+      cloudGroupRef.current.children.forEach((c, i) => { if (c instanceof THREE.Mesh && c.material) c.material.opacity = i === 0 ? 0.8 : 0.3 })
     }
   }, [isNight])
 
