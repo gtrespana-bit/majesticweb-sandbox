@@ -66,7 +66,6 @@ export default function EarthScene() {
     const earth = new THREE.Mesh(earthGeo, earthDayMat)
     earthGroup.add(earth)
 
-    // Carga segura de texturas
     const loadTex = (url: string) => new Promise<THREE.Texture>((resolve) => texLoader.load(url, resolve))
     Promise.all([
       loadTex('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg'),
@@ -82,7 +81,6 @@ export default function EarthScene() {
       })
     })
 
-    // Atmósfera (Shader)
     const atmoGeo = new THREE.SphereGeometry(R * 1.08, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
       vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
@@ -91,7 +89,6 @@ export default function EarthScene() {
     })
     earthGroup.add(new THREE.Mesh(atmoGeo, atmoMat))
 
-    // Nubes
     const cloudGroup = new THREE.Group()
     earthGroup.add(cloudGroup)
     cloudGroupRef.current = cloudGroup
@@ -100,46 +97,40 @@ export default function EarthScene() {
       cloudGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 64, 64), new THREE.MeshPhongMaterial({ map: tex, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide })))
     })
 
-    // Luces
     scene.add(new THREE.AmbientLight(0x222244, 0.5))
     const sunLight = new THREE.DirectionalLight(0xffffff, 1.8)
     sunLight.position.set(5, 3, 5)
     scene.add(sunLight)
 
-    // 4. Loop de animación
+    // 4. Loop
     const clock = new THREE.Clock()
     let targetRotX = 0, targetRotY = 0
 
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
-
       targetRotY += 0.0005
       earthGroup.rotation.x += (targetRotX - earthGroup.rotation.x) * 0.15
       earthGroup.rotation.y += (targetRotY - earthGroup.rotation.y) * 0.15
-
-      cloudGroup.children.forEach((child, i) => {
-        child.rotation.y = time * (0.006 + i * 0.003)
-      })
-
+      cloudGroup.children.forEach((child, i) => { child.rotation.y = time * (0.006 + i * 0.003) })
       stars.rotation.y = time * 0.0003
       renderer.render(scene, camera)
     }
     animate()
 
-    // ✅ 5. FUNCIÓN MOVER CÁMARA (DEFINIDA ANTES DE SCROLLTRIGGER)
+    // ✅ 5. FUNCIÓN CÁMARA (DEFINIDA ANTES DE TRIGGERS)
     function moveCamera(index: number) {
       const positions = [
-        { z: 5, x: 0, y: 0 },
-        { z: 6.5, x: 2.5, y: 0.5 },
-        { z: 5, x: -2.5, y: 0 },
-        { z: 5.5, x: 0, y: 0 }
+        { z: 5, x: 0, y: 0 },      // Hero
+        { z: 6.5, x: 2.5, y: 0.5 }, // Servicios
+        { z: 5, x: -2.5, y: 0 },    // Portfolio
+        { z: 5.5, x: 0, y: 0 }      // Contacto
       ]
       const pos = positions[index] || positions[0]
       gsap.to(camera.position, { z: pos.z, x: pos.x, y: pos.y, duration: 2.5, ease: 'power3.inOut' })
     }
 
-    // ✅ 6. GSAP ScrollTrigger (AHORA SÍ PUEDE ACCEDER A moveCamera)
+    // ✅ 6. SCROLLTRIGGER (VINCULADO AL SCROLL REAL)
     const sections = document.querySelectorAll('section')
     if (sections.length > 0) {
       sections.forEach((_, index) => {
@@ -152,6 +143,8 @@ export default function EarthScene() {
         })
         triggersRef.current.push(trigger)
       })
+      // Next.js hydration fix: refrescar triggers tras paint
+      requestAnimationFrame(() => ScrollTrigger.refresh())
     }
 
     // 7. Resize
@@ -162,30 +155,26 @@ export default function EarthScene() {
     }
     window.addEventListener('resize', handleResize)
 
-    // 8. Cleanup estricto
+    // 8. Cleanup
     return () => {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('resize', handleResize)
       triggersRef.current.forEach(t => t.kill())
       triggersRef.current = []
-
       if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
         containerRef.current.removeChild(renderer.domElement)
       }
-
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry?.dispose()
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach(m => m.dispose())
-          } else {
-            obj.material?.dispose()
-          }
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+          else obj.material?.dispose()
         }
       })
       renderer.dispose()
     }
   }, [])
 
+  // ✅ FONDO FIJO GLOBAL (visible durante todo el scroll)
   return <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-none" />
 }
