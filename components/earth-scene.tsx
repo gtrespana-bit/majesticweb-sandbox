@@ -75,19 +75,13 @@ export default function EarthScene() {
   const rafRef = useRef<number>(0)
   const triggersRef = useRef<ScrollTrigger[]>([])
   
-  // ✅ NUEVAS REFS (sin drag)
+  // ✅ NUEVA FÍSICA (Delta directo + inercia real)
   const isHoveringEarthRef = useRef(false)
-  const targetRotRef = useRef({ x: 0, y: 0 })
-  const autoRotateRef = useRef(true)
-  const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
-  const mouseNormRef = useRef({ x: 0, y: 0 })
+  const lastMouseRef = useRef({ x: 0, y: 0 })
+  const rotVelRef = useRef({ x: 0, y: 0 })
+  const isInitializedRef = useRef(false)
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
-
-  // Constantes de control
-  const DEAD_ZONE = 0.15
-  const SENSITIVITY_X = 0.012
-  const SENSITIVITY_Y = 0.004
 
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
@@ -223,29 +217,27 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // ✅ ANIMATION LOOP (NUEVA LÓGICA)
+    // ✅ ANIMATION LOOP (Física directa + inercia)
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
-      // Solo actualizar rotación si NO estamos sobre la Tierra
       if (!isHoveringEarthRef.current) {
-        const x = Math.abs(mouseNormRef.current.x) > DEAD_ZONE ? mouseNormRef.current.x : 0
-        const y = Math.abs(mouseNormRef.current.y) > DEAD_ZONE ? mouseNormRef.current.y : 0
+        // Aplicar velocidad directamente a la rotación
+        earthGroup.rotation.y += rotVelRef.current.y
+        earthGroup.rotation.x += rotVelRef.current.x
 
-        targetRotRef.current.y += (x * 0.8 - targetRotRef.current.y) * 0.04
-        targetRotRef.current.x += (-y * 0.3 - targetRotRef.current.x) * 0.04 // Eje Y invertido
+        // Fricción suave por frame (0.94 = desaceleración natural)
+        rotVelRef.current.x *= 0.94
+        rotVelRef.current.y *= 0.94
 
-        // Auto-rotación suave cuando el cursor está en zona muerta
-        if (Math.abs(x) < 0.2 && Math.abs(y) < 0.2) {
-          targetRotRef.current.y += 0.0003
+        // Auto-rotación cuando está casi en reposo
+        const isIdle = Math.abs(rotVelRef.current.x) < 0.00001 && Math.abs(rotVelRef.current.y) < 0.00001
+        if (isIdle) {
+          earthGroup.rotation.y += 0.0003
         }
       }
-
-      // Interpolación suave siempre activa
-      earthGroup.rotation.x += (targetRotRef.current.x - earthGroup.rotation.x) * 0.15
-      earthGroup.rotation.y += (targetRotRef.current.y - earthGroup.rotation.y) * 0.15
 
       cloudGroup.children.forEach((child, i) => { if (child instanceof THREE.Mesh) child.rotation.y = time * (0.006 + i * 0.003) })
       
@@ -269,10 +261,18 @@ export default function EarthScene() {
     }
     animate()
 
-    // ✅ EVENTOS (SIN DRAG, CON HOVER DETECTION)
+    // ✅ EVENTOS (Delta seguro + hover)
     const handleMouseMove = (e: MouseEvent) => {
-      mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
+      // Inicializar en el primer movimiento para evitar el "tirón" inicial
+      if (!isInitializedRef.current) {
+        lastMouseRef.current = { x: e.clientX, y: e.clientY }
+        isInitializedRef.current = true
+        return
+      }
+
+      const dx = e.clientX - lastMouseRef.current.x
+      const dy = e.clientY - lastMouseRef.current.y
+      lastMouseRef.current = { x: e.clientX, y: e.clientY }
 
       if (earthRef.current && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
@@ -280,12 +280,15 @@ export default function EarthScene() {
         mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
         
         raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
-        
-        // Detectar hover sobre Tierra
-        const earthHits = raycasterRef.current.intersectObject(earthRef.current)
-        isHoveringEarthRef.current = earthHits.length > 0
+        isHoveringEarthRef.current = raycasterRef.current.intersectObject(earthRef.current).length > 0
 
-        // Detectar hover sobre ciudades (tooltips)
+        // Solo aplicar rotación si NO está sobre el globo Y el movimiento supera 2px
+        if (!isHoveringEarthRef.current && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+          rotVelRef.current.y += dx * 0.0008
+          rotVelRef.current.x -= dy * 0.0004
+        }
+
+        // Tooltips
         const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
         if (cityHits.length > 0) {
           setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
@@ -335,7 +338,6 @@ export default function EarthScene() {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('resize', handleResize)
-      clearTimeout(autoRotateTimerRef.current)
       triggersRef.current.forEach(t => t.kill())
       triggersRef.current = []
 
