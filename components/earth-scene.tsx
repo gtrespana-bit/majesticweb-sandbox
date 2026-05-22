@@ -75,15 +75,19 @@ export default function EarthScene() {
   const rafRef = useRef<number>(0)
   const triggersRef = useRef<ScrollTrigger[]>([])
   
-  const isDraggingRef = useRef(false)
-  const prevMouseRef = useRef({ x: 0, y: 0 })
+  // ✅ NUEVAS REFS (sin drag)
+  const isHoveringEarthRef = useRef(false)
   const targetRotRef = useRef({ x: 0, y: 0 })
-  const rotVelRef = useRef({ x: 0, y: 0 })
   const autoRotateRef = useRef(true)
   const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const mouseNormRef = useRef({ x: 0, y: 0 })
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
+
+  // Constantes de control
+  const DEAD_ZONE = 0.15
+  const SENSITIVITY_X = 0.012
+  const SENSITIVITY_Y = 0.004
 
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
@@ -219,25 +223,27 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // Animation Loop
+    // ✅ ANIMATION LOOP (NUEVA LÓGICA)
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
-      if (!isDraggingRef.current) {
-        targetRotRef.current.x += rotVelRef.current.x
-        targetRotRef.current.y += rotVelRef.current.y
-        rotVelRef.current.x *= 0.95
-        rotVelRef.current.y *= 0.95
+      // Solo actualizar rotación si NO estamos sobre la Tierra
+      if (!isHoveringEarthRef.current) {
+        const x = Math.abs(mouseNormRef.current.x) > DEAD_ZONE ? mouseNormRef.current.x : 0
+        const y = Math.abs(mouseNormRef.current.y) > DEAD_ZONE ? mouseNormRef.current.y : 0
 
-        if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
-          targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
-          // ✅ FIX: Invertir eje Y para rotación natural (arriba=arriba, abajo=abajo)
-          targetRotRef.current.x += -mouseNormRef.current.y * 0.001
+        targetRotRef.current.y += (x * 0.8 - targetRotRef.current.y) * 0.04
+        targetRotRef.current.x += (-y * 0.3 - targetRotRef.current.x) * 0.04 // Eje Y invertido
+
+        // Auto-rotación suave cuando el cursor está en zona muerta
+        if (Math.abs(x) < 0.2 && Math.abs(y) < 0.2) {
+          targetRotRef.current.y += 0.0003
         }
       }
 
+      // Interpolación suave siempre activa
       earthGroup.rotation.x += (targetRotRef.current.x - earthGroup.rotation.x) * 0.15
       earthGroup.rotation.y += (targetRotRef.current.y - earthGroup.rotation.y) * 0.15
 
@@ -263,47 +269,32 @@ export default function EarthScene() {
     }
     animate()
 
-    // Events
-    const handleMouseDown = (e: MouseEvent) => {
-      isDraggingRef.current = true
-      autoRotateRef.current = false
-      clearTimeout(autoRotateTimerRef.current)
-      prevMouseRef.current = { x: e.clientX, y: e.clientY }
-    }
-    const handleMouseUp = () => {
-      isDraggingRef.current = false
-      autoRotateTimerRef.current = setTimeout(() => { autoRotateRef.current = true }, 4000)
-    }
+    // ✅ EVENTOS (SIN DRAG, CON HOVER DETECTION)
     const handleMouseMove = (e: MouseEvent) => {
       mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
       mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
 
-      if (isDraggingRef.current) {
-        const dx = e.clientX - prevMouseRef.current.x
-        const dy = e.clientY - prevMouseRef.current.y
-        rotVelRef.current.x = dy * 0.005
-        rotVelRef.current.y = dx * 0.005
-        targetRotRef.current.x += rotVelRef.current.x
-        targetRotRef.current.y += rotVelRef.current.y
-        prevMouseRef.current = { x: e.clientX, y: e.clientY }
-      }
+      if (earthRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+        
+        raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
+        
+        // Detectar hover sobre Tierra
+        const earthHits = raycasterRef.current.intersectObject(earthRef.current)
+        isHoveringEarthRef.current = earthHits.length > 0
 
-      const rect = containerRef.current!.getBoundingClientRect()
-      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-      raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
-      const intersects = raycasterRef.current.intersectObjects(cityMeshesRef.current)
-
-      if (intersects.length > 0) {
-        const city = intersects[0].object.userData.city
-        setTooltip({ visible: true, x: e.clientX, y: e.clientY, city })
-      } else {
-        setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
+        // Detectar hover sobre ciudades (tooltips)
+        const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
+        if (cityHits.length > 0) {
+          setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
+        } else {
+          setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
+        }
       }
     }
 
-    containerRef.current.addEventListener('mousedown', handleMouseDown)
-    window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('mousemove', handleMouseMove)
 
     const handleResize = () => {
@@ -342,10 +333,8 @@ export default function EarthScene() {
 
     return () => {
       cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('resize', handleResize)
-      containerRef.current?.removeEventListener('mousedown', handleMouseDown)
       clearTimeout(autoRotateTimerRef.current)
       triggersRef.current.forEach(t => t.kill())
       triggersRef.current = []
