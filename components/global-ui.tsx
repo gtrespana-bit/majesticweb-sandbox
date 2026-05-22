@@ -75,7 +75,7 @@ export const CursorTrail = ({ mobile }: { mobile: boolean }) => {
   return null
 }
 
-/* 🌌 CANVAS DE FONDO (Estrellas / Figuras Reactivas) */
+/* 🌌 CANVAS DE FONDO (Estrellas / Figuras Reactivas) - SIN TEMA LIGHT */
 export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouse = useRef({ x: -1000, y: -1000 })
@@ -91,15 +91,10 @@ export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: bo
 
     if (!els.current.length || els.current[0]?.theme !== theme) {
       els.current = []
-      if (theme === 'light') {
-        for (let i = 0; i < (mobile ? 50 : 110); i++) {
-          els.current.push({ t: 'p', x: Math.random() * w, y: Math.random() * h, w: Math.random() * 70 + 20, h: Math.random() * 70 + 20, a: Math.random() * Math.PI, o: Math.random() * 0.15 + 0.05, p: 0, theme })
-        }
-      } else {
-        const hue = theme === 'cyber' ? '315, 85%, 60%' : '263, 70%, 60%'
-        for (let i = 0; i < (mobile ? 40 : 100); i++) {
-          els.current.push({ t: 'd', x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35, s: Math.random() * 2 + 0.8, o: Math.random() * 0.4 + 0.2, hue, theme })
-        }
+      // ✅ Solo dark y cyber. Eliminada la rama 'light'
+      const hue = theme === 'cyber' ? '315, 85%, 60%' : '263, 70%, 60%'
+      for (let i = 0; i < (mobile ? 40 : 100); i++) {
+        els.current.push({ t: 'd', x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35, s: Math.random() * 2 + 0.8, o: Math.random() * 0.4 + 0.2, hue, theme })
       }
     }
 
@@ -170,13 +165,12 @@ export const LiquidEffect = () => {
   return <>{r.map(i => (<div key={i.id} className="liquid-ripple" style={{ left: i.x, top: i.y, width: 120, height: 120 }} />))}</>
 }
 
-/* 🎨 SWITCHER */
+/* 🎨 SWITCHER (SOLO DARK Y CYBER) */
 export const ThemeSwitcher = () => {
   const { theme, setTheme } = useContext(ThemeContext)
-  type ThemeId = 'dark' | 'light' | 'cyber'
+  type ThemeId = 'dark' | 'cyber' // ✅ Eliminada 'light'
   const themes: { id: ThemeId; icon: React.ReactNode }[] = [
     { id: 'dark', icon: <Moon className="w-4 h-4" /> },
-    { id: 'light', icon: <Sun className="w-4 h-4" /> },
     { id: 'cyber', icon: <ZapIcon className="w-4 h-4" /> }
   ]
   return (

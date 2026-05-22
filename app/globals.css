@@ -15,18 +15,7 @@
   --border: 215 20% 24%;
   --accent: 270 65% 55%;
 }
-[data-theme="light"] {
-  --bg: 210 20% 98%;
-  --fg: 222 47% 8%;
-  --card: 0 0% 100%;
-  --card-fg: 222 47% 8%;
-  --primary: 221 83% 45%;
-  --primary-fg: 0 0% 100%;
-  --muted: 210 15% 92%;
-  --muted-fg: 215 16% 35%;
-  --border: 214 20% 88%;
-  --accent: 195 80% 45%;
-}
+/* ✅ BLOQUE 'light' ELIMINADO */
 [data-theme="cyber"] {
   --bg: 280 30% 6%;
   --fg: 0 0% 95%;

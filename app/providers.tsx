@@ -5,10 +5,12 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CustomCursor, CursorTrail, DynamicBackground, AuroraBackground, CinematicGrain, CinematicVignette, LiquidEffect, ThemeSwitcher, ReactiveAudio } from '@/components/global-ui'
 
-export const ThemeContext = createContext<{ theme: 'dark' | 'light' | 'cyber'; setTheme: (t: 'dark' | 'light' | 'cyber') => void }>({ theme: 'dark', setTheme: () => {} })
+// ✅ Tipo actualizado: solo 'dark' | 'cyber'
+export const ThemeContext = createContext<{ theme: 'dark' | 'cyber'; setTheme: (t: 'dark' | 'cyber') => void }>({ theme: 'dark', setTheme: () => {} })
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<'dark' | 'light' | 'cyber'>('dark')
+  // ✅ Estado actualizado: solo 'dark' | 'cyber'
+  const [theme, setTheme] = useState<'dark' | 'cyber'>('dark')
   const [mobile, setMobile] = useState(false)
   const pathname = usePathname()
 

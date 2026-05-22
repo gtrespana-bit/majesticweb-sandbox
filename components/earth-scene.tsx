@@ -233,7 +233,8 @@ export default function EarthScene() {
 
         if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
           targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
-          targetRotRef.current.x += mouseNormRef.current.y * 0.001
+          // ✅ FIX: Invertir eje Y para rotación natural (arriba=arriba, abajo=abajo)
+          targetRotRef.current.x += -mouseNormRef.current.y * 0.001
         }
       }
 
