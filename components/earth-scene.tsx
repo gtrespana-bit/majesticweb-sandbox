@@ -75,11 +75,11 @@ export default function EarthScene() {
   const rafRef = useRef<number>(0)
   const triggersRef = useRef<ScrollTrigger[]>([])
   
-  // ✅ NUEVA FÍSICA (Delta directo + inercia real)
+  // ✅ NUEVA FÍSICA POSICIONAL + INTERPOLACIÓN SUAVE
   const isHoveringEarthRef = useRef(false)
-  const lastMouseRef = useRef({ x: 0, y: 0 })
-  const rotVelRef = useRef({ x: 0, y: 0 })
-  const isInitializedRef = useRef(false)
+  const mouseNormRef = useRef({ x: 0, y: 0 })
+  const velRef = useRef({ x: 0, y: 0 })
+  const targetVelRef = useRef({ x: 0, y: 0 })
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
 
@@ -217,27 +217,38 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // ✅ ANIMATION LOOP (Física directa + inercia)
+    // ✅ ANIMATION LOOP (Posicional + Lerp fluido)
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
       if (!isHoveringEarthRef.current) {
-        // Aplicar velocidad directamente a la rotación
-        earthGroup.rotation.y += rotVelRef.current.y
-        earthGroup.rotation.x += rotVelRef.current.x
+        const x = mouseNormRef.current.x
+        const y = mouseNormRef.current.y
+        const deadZone = 0.15
+        const maxSpeed = 0.012
 
-        // Fricción suave por frame (0.94 = desaceleración natural)
-        rotVelRef.current.x *= 0.94
-        rotVelRef.current.y *= 0.94
+        // Velocidad objetivo basada en posición del cursor
+        targetVelRef.current.y = (Math.abs(x) > deadZone ? x : 0) * maxSpeed
+        targetVelRef.current.x = -(Math.abs(y) > deadZone ? y : 0) * (maxSpeed * 0.5)
 
-        // Auto-rotación cuando está casi en reposo
-        const isIdle = Math.abs(rotVelRef.current.x) < 0.00001 && Math.abs(rotVelRef.current.y) < 0.00001
-        if (isIdle) {
-          earthGroup.rotation.y += 0.0003
+        // Auto-rotación suave cuando está en zona muerta
+        if (Math.abs(x) <= deadZone && Math.abs(y) <= deadZone) {
+          targetVelRef.current.y += 0.0002
         }
+      } else {
+        // Freno suave al hover
+        targetVelRef.current.y *= 0.9
+        targetVelRef.current.x *= 0.9
       }
+
+      // Interpolación lineal (lerp) para transiciones cinemáticas
+      velRef.current.x += (targetVelRef.current.x - velRef.current.x) * 0.06
+      velRef.current.y += (targetVelRef.current.y - velRef.current.y) * 0.06
+
+      earthGroup.rotation.y += velRef.current.y
+      earthGroup.rotation.x += velRef.current.x
 
       cloudGroup.children.forEach((child, i) => { if (child instanceof THREE.Mesh) child.rotation.y = time * (0.006 + i * 0.003) })
       
@@ -261,18 +272,10 @@ export default function EarthScene() {
     }
     animate()
 
-    // ✅ EVENTOS (Delta seguro + hover)
+    // ✅ EVENTOS (Solo normalización + hover + tooltips)
     const handleMouseMove = (e: MouseEvent) => {
-      // Inicializar en el primer movimiento para evitar el "tirón" inicial
-      if (!isInitializedRef.current) {
-        lastMouseRef.current = { x: e.clientX, y: e.clientY }
-        isInitializedRef.current = true
-        return
-      }
-
-      const dx = e.clientX - lastMouseRef.current.x
-      const dy = e.clientY - lastMouseRef.current.y
-      lastMouseRef.current = { x: e.clientX, y: e.clientY }
+      mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
+      mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
 
       if (earthRef.current && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
@@ -281,12 +284,6 @@ export default function EarthScene() {
         
         raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
         isHoveringEarthRef.current = raycasterRef.current.intersectObject(earthRef.current).length > 0
-
-        // Solo aplicar rotación si NO está sobre el globo Y el movimiento supera 2px
-        if (!isHoveringEarthRef.current && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
-          rotVelRef.current.y += dx * 0.0008
-          rotVelRef.current.x -= dy * 0.0004
-        }
 
         // Tooltips
         const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
