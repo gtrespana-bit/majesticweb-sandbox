@@ -91,12 +91,14 @@ export default function EarthScene() {
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
+    // 📱 Detectar móvil una vez por mount
     const isMobile = window.innerWidth < 768
+    
     const scene = new THREE.Scene()
     sceneRef.current = scene
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000)
-    // 📱 Tamaño ajustado en móvil: cámara más alejada (Z:7 vs Z:5)
-    camera.position.set(0, 0, isMobile ? 7 : 5)
+    // 📱 Cámara más alejada en móvil para que la Tierra sea ~40% más pequeña
+    camera.position.set(0, 0, isMobile ? 7.5 : 5)
     cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
@@ -306,7 +308,7 @@ export default function EarthScene() {
         const dy = e.touches[0].clientY - touchStartRef.current.y
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         
-        // 📱 Velocidad táctil reducida para control suave
+        // 📱 Velocidad táctil reducida
         if (Math.abs(dx) > 2) {
           targetVelRef.current.y += dx * 0.0008
         }
@@ -344,12 +346,14 @@ export default function EarthScene() {
       requestAnimationFrame(() => ScrollTrigger.refresh())
     }
 
+    // 📱 moveCamera con Z ajustado por dispositivo
     function moveCamera(index: number) {
+      const isMob = window.innerWidth < 768
       const positions = [
-        { z: 5, x: 0, y: 0 },
-        { z: 6.5, x: 2.5, y: 0.5 },
-        { z: 5, x: -2.5, y: 0 },
-        { z: 5.5, x: 0, y: 0 }
+        { z: isMob ? 7.5 : 5, x: 0, y: 0 },
+        { z: isMob ? 9.5 : 6.5, x: 2.5, y: 0.5 },
+        { z: isMob ? 7.5 : 5, x: -2.5, y: 0 },
+        { z: isMob ? 8.25 : 5.5, x: 0, y: 0 }
       ]
       const pos = positions[index] || positions[0]
       gsap.to(camera.position, { z: pos.z, x: pos.x, y: pos.y, duration: 2.5, ease: 'power3.inOut' })
