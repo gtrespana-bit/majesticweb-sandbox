@@ -82,7 +82,6 @@ export default function EarthScene() {
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
 
-  // ✅ NUEVOS REFS PARA TOUCH
   const touchStartRef = useRef({ x: 0, y: 0 })
   const isTouchingRef = useRef(false)
 
@@ -92,10 +91,12 @@ export default function EarthScene() {
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
+    const isMobile = window.innerWidth < 768
     const scene = new THREE.Scene()
     sceneRef.current = scene
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000)
-    camera.position.set(0, 0, 5)
+    // 📱 Tamaño ajustado en móvil: cámara más alejada (Z:7 vs Z:5)
+    camera.position.set(0, 0, isMobile ? 7 : 5)
     cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
@@ -271,7 +272,7 @@ export default function EarthScene() {
     }
     animate()
 
-    // ✅ EVENTOS (Mouse + Touch unificados)
+    // ✅ EVENTOS
     const handleMouseMove = (e: MouseEvent) => {
       mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
       mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -305,9 +306,9 @@ export default function EarthScene() {
         const dy = e.touches[0].clientY - touchStartRef.current.y
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         
-        // Rotación basada en drag horizontal, preserva scroll vertical
+        // 📱 Velocidad táctil reducida para control suave
         if (Math.abs(dx) > 2) {
-          targetVelRef.current.y += dx * 0.0025
+          targetVelRef.current.y += dx * 0.0008
         }
       }
     }
@@ -397,7 +398,6 @@ export default function EarthScene() {
 
   return (
     <>
-      {/* ✅ touch-pan-y permite scroll vertical mientras el drag horizontal rota la Tierra */}
       <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto touch-pan-y" />
       
       {tooltip.visible && tooltip.city && (
