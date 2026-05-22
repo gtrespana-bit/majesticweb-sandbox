@@ -75,13 +75,16 @@ export default function EarthScene() {
   const rafRef = useRef<number>(0)
   const triggersRef = useRef<ScrollTrigger[]>([])
   
-  // ✅ NUEVA FÍSICA POSICIONAL + INTERPOLACIÓN SUAVE
   const isHoveringEarthRef = useRef(false)
   const mouseNormRef = useRef({ x: 0, y: 0 })
   const velRef = useRef({ x: 0, y: 0 })
   const targetVelRef = useRef({ x: 0, y: 0 })
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
+
+  // ✅ NUEVOS REFS PARA TOUCH
+  const touchStartRef = useRef({ x: 0, y: 0 })
+  const isTouchingRef = useRef(false)
 
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
@@ -217,33 +220,29 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // ✅ ANIMATION LOOP (Posicional + Lerp fluido)
+    // ✅ ANIMATION LOOP
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
-      if (!isHoveringEarthRef.current) {
+      if (!isHoveringEarthRef.current && !isTouchingRef.current) {
         const x = mouseNormRef.current.x
         const y = mouseNormRef.current.y
         const deadZone = 0.15
         const maxSpeed = 0.012
 
-        // Velocidad objetivo basada en posición del cursor
         targetVelRef.current.y = (Math.abs(x) > deadZone ? x : 0) * maxSpeed
         targetVelRef.current.x = -(Math.abs(y) > deadZone ? y : 0) * (maxSpeed * 0.5)
 
-        // Auto-rotación suave cuando está en zona muerta
         if (Math.abs(x) <= deadZone && Math.abs(y) <= deadZone) {
           targetVelRef.current.y += 0.0002
         }
-      } else {
-        // Freno suave al hover
+      } else if (isHoveringEarthRef.current) {
         targetVelRef.current.y *= 0.9
         targetVelRef.current.x *= 0.9
       }
 
-      // Interpolación lineal (lerp) para transiciones cinemáticas
       velRef.current.x += (targetVelRef.current.x - velRef.current.x) * 0.06
       velRef.current.y += (targetVelRef.current.y - velRef.current.y) * 0.06
 
@@ -272,7 +271,7 @@ export default function EarthScene() {
     }
     animate()
 
-    // ✅ EVENTOS (Solo normalización + hover + tooltips)
+    // ✅ EVENTOS (Mouse + Touch unificados)
     const handleMouseMove = (e: MouseEvent) => {
       mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
       mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -285,7 +284,6 @@ export default function EarthScene() {
         raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
         isHoveringEarthRef.current = raycasterRef.current.intersectObject(earthRef.current).length > 0
 
-        // Tooltips
         const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
         if (cityHits.length > 0) {
           setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
@@ -295,7 +293,32 @@ export default function EarthScene() {
       }
     }
 
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        isTouchingRef.current = true
+        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      }
+    }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && isTouchingRef.current) {
+        const dx = e.touches[0].clientX - touchStartRef.current.x
+        const dy = e.touches[0].clientY - touchStartRef.current.y
+        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        
+        // Rotación basada en drag horizontal, preserva scroll vertical
+        if (Math.abs(dx) > 2) {
+          targetVelRef.current.y += dx * 0.0025
+        }
+      }
+    }
+    const handleTouchEnd = () => {
+      isTouchingRef.current = false
+    }
+
     window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd)
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight
@@ -334,6 +357,9 @@ export default function EarthScene() {
     return () => {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
       window.removeEventListener('resize', handleResize)
       triggersRef.current.forEach(t => t.kill())
       triggersRef.current = []
@@ -371,7 +397,8 @@ export default function EarthScene() {
 
   return (
     <>
-      <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto" />
+      {/* ✅ touch-pan-y permite scroll vertical mientras el drag horizontal rota la Tierra */}
+      <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto touch-pan-y" />
       
       {tooltip.visible && tooltip.city && (
         <div className="fixed z-50 pointer-events-none bg-black/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 min-w-[240px] shadow-2xl shadow-cyan-500/10 transition-opacity duration-200"
