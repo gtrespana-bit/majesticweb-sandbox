@@ -82,6 +82,7 @@ export default function EarthScene() {
   const autoRotateRef = useRef(true)
   const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const mouseNormRef = useRef({ x: 0, y: 0 })
+  const isHoveringEarthRef = useRef(false) // ✅ Nuevo: control de hover
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
 
@@ -232,8 +233,11 @@ export default function EarthScene() {
         rotVelRef.current.y *= 0.95
 
         if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
-          targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
-          targetRotRef.current.x += mouseNormRef.current.y * 0.001
+          // ✅ SOLO rota si el cursor NO está sobre la Tierra
+          if (!isHoveringEarthRef.current) {
+            targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
+            targetRotRef.current.x += -mouseNormRef.current.y * 0.001 // ✅ Eje Y invertido
+          }
         }
       }
 
@@ -287,17 +291,23 @@ export default function EarthScene() {
         prevMouseRef.current = { x: e.clientX, y: e.clientY }
       }
 
-      const rect = containerRef.current!.getBoundingClientRect()
-      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-      raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
-      const intersects = raycasterRef.current.intersectObjects(cityMeshesRef.current)
+      if (containerRef.current && earthRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+        raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
 
-      if (intersects.length > 0) {
-        const city = intersects[0].object.userData.city
-        setTooltip({ visible: true, x: e.clientX, y: e.clientY, city })
-      } else {
-        setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
+        // ✅ Detectar si el cursor está sobre la Tierra
+        const earthHits = raycasterRef.current.intersectObject(earthRef.current)
+        isHoveringEarthRef.current = earthHits.length > 0
+
+        // Tooltips
+        const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
+        if (cityHits.length > 0) {
+          setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
+        } else {
+          setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
+        }
       }
     }
 

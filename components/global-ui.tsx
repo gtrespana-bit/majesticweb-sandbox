@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useState, useEffect, useRef, useContext } from 'react'
-import { Music, Volume2, VolumeX, Moon, Sun, Zap as ZapIcon } from 'lucide-react'
+import { Moon, Zap as ZapIcon } from 'lucide-react'
 import { ThemeContext } from '@/app/providers'
 
 /* 🖱️ CURSOR PERSONALIZADO */
@@ -75,7 +75,7 @@ export const CursorTrail = ({ mobile }: { mobile: boolean }) => {
   return null
 }
 
-/* 🌌 CANVAS DE FONDO (Estrellas / Figuras Reactivas) - SIN TEMA LIGHT */
+/* 🌌 CANVAS DE FONDO */
 export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouse = useRef({ x: -1000, y: -1000 })
@@ -91,7 +91,6 @@ export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: bo
 
     if (!els.current.length || els.current[0]?.theme !== theme) {
       els.current = []
-      // ✅ Solo dark y cyber. Eliminada la rama 'light'
       const hue = theme === 'cyber' ? '315, 85%, 60%' : '263, 70%, 60%'
       for (let i = 0; i < (mobile ? 40 : 100); i++) {
         els.current.push({ t: 'd', x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35, s: Math.random() * 2 + 0.8, o: Math.random() * 0.4 + 0.2, hue, theme })
@@ -101,26 +100,13 @@ export const DynamicBackground = ({ theme, mobile }: { theme: string; mobile: bo
     const anim = () => {
       ctx.clearRect(0, 0, w, h)
       els.current.forEach(el => {
-        if (el.t === 'd') {
-          el.x += el.vx; el.y += el.vy
-          const dx = mouse.current.x - el.x, dy = mouse.current.y - el.y, dist = Math.hypot(dx, dy)
-          if (dist < 100) { el.vx -= dx * 0.0004; el.vy -= dy * 0.0004 }
-          if (el.x < 0 || el.x > w) el.vx *= -1
-          if (el.y < 0 || el.y > h) el.vy *= -1
-          ctx.beginPath(); ctx.arc(el.x, el.y, el.s, 0, Math.PI * 2)
-          ctx.fillStyle = `hsla(${el.hue}, ${el.o})`; ctx.fill()
-        } else {
-          const mx = el.x + el.w / 2, my = el.y + el.h / 2, dist = Math.hypot(mx - mouse.current.x, my - mouse.current.y)
-          const tp = dist < 150 ? 1 - dist / 150 : 0; el.p += (tp - el.p) * 0.15
-          const pushX = (el.p > 0) ? (mouse.current.x - mx) * el.p * 0.4 : 0
-          const pushY = (el.p > 0) ? (mouse.current.y - my) * el.p * 0.4 : 0
-          const op = el.o * (1 - el.p * 0.5)
-          ctx.save(); ctx.translate(el.x + el.w / 2 + pushX, el.y + el.h / 2 + pushY); ctx.rotate(el.a)
-          ctx.strokeStyle = `hsla(222, 47%, 25%, ${op})`; ctx.lineWidth = 1.2; ctx.beginPath()
-          if (el.t === 'p') { ctx.moveTo(-el.w / 2, 0); ctx.lineTo(0, -el.h / 2); ctx.lineTo(el.w / 2, 0); ctx.lineTo(0, el.h / 2); ctx.closePath() }
-          else { ctx.moveTo(-el.w / 2, -el.h / 2); ctx.lineTo(el.w / 2, el.h / 2) }
-          ctx.stroke(); ctx.restore()
-        }
+        el.x += el.vx; el.y += el.vy
+        const dx = mouse.current.x - el.x, dy = mouse.current.y - el.y, dist = Math.hypot(dx, dy)
+        if (dist < 100) { el.vx -= dx * 0.0004; el.vy -= dy * 0.0004 }
+        if (el.x < 0 || el.x > w) el.vx *= -1
+        if (el.y < 0 || el.y > h) el.vy *= -1
+        ctx.beginPath(); ctx.arc(el.x, el.y, el.s, 0, Math.PI * 2)
+        ctx.fillStyle = `hsla(${el.hue}, ${el.o})`; ctx.fill()
       })
       frame.current = requestAnimationFrame(anim)
     }
@@ -165,10 +151,10 @@ export const LiquidEffect = () => {
   return <>{r.map(i => (<div key={i.id} className="liquid-ripple" style={{ left: i.x, top: i.y, width: 120, height: 120 }} />))}</>
 }
 
-/* 🎨 SWITCHER (SOLO DARK Y CYBER) */
+/* 🎨 SWITCHER */
 export const ThemeSwitcher = () => {
   const { theme, setTheme } = useContext(ThemeContext)
-  type ThemeId = 'dark' | 'cyber' // ✅ Eliminada 'light'
+  type ThemeId = 'dark' | 'cyber'
   const themes: { id: ThemeId; icon: React.ReactNode }[] = [
     { id: 'dark', icon: <Moon className="w-4 h-4" /> },
     { id: 'cyber', icon: <ZapIcon className="w-4 h-4" /> }
@@ -180,76 +166,6 @@ export const ThemeSwitcher = () => {
           {t.icon}
         </button>
       ))}
-    </div>
-  )
-}
-
-/* 🎵 AUDIO REACTIVO */
-export const ReactiveAudio = () => {
-  const [a, s] = useState(false)
-  const [m, sm] = useState(false)
-  const c = useRef<AudioContext | null>(null)
-  const g = useRef<GainNode | null>(null)
-  const o = useRef<OscillatorNode | null>(null)
-  const t = useRef<ReturnType<typeof setTimeout>>()
-
-  const init = async () => {
-    if (c.current) return
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      const ctx = new AudioCtx()
-      c.current = ctx
-      const gn = ctx.createGain(); gn.gain.value = 0.02; g.current = gn
-      const os = ctx.createOscillator(); os.type = 'sine'; os.frequency.value = 85; o.current = os
-      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600
-      os.connect(f); f.connect(gn); gn.connect(ctx.destination); os.start()
-      gn.gain.setTargetAtTime(0.02, ctx.currentTime, 0.1); s(true)
-    } catch (e) { console.warn('Audio bloqueado:', e) }
-  }
-
-  const toggle = async () => {
-    if (!c.current) { await init(); return }
-    if (c.current.state === 'suspended') await c.current.resume()
-    s(prev => !prev)
-  }
-
-  const mute = () => {
-    if (!g.current || !c.current) return
-    sm(prev => !prev)
-    g.current.gain.setTargetAtTime(!m ? 0.02 : 0, c.current.currentTime, 0.05)
-  }
-
-  useEffect(() => {
-    let lx = 0, ly = 0
-    const mv = (e: MouseEvent) => {
-      if (!a || m || !c.current || !g.current || !o.current) return
-      clearTimeout(t.current)
-      const sp = Math.hypot(e.clientX - lx, e.clientY - ly)
-      lx = e.clientX; ly = e.clientY
-      g.current.gain.setTargetAtTime(Math.min(0.09, sp * 0.0008) + 0.02, c.current.currentTime, 0.05)
-      o.current.frequency.setTargetAtTime(85 + Math.min(70, sp * 0.9), c.current.currentTime, 0.1)
-      t.current = setTimeout(() => {
-        if (!g.current || !c.current || !o.current) return
-        g.current.gain.setTargetAtTime(0.02, c.current.currentTime, 0.2)
-        o.current.frequency.setTargetAtTime(85, c.current.currentTime, 0.3)
-      }, 250)
-    }
-    window.addEventListener('mousemove', mv)
-    return () => { window.removeEventListener('mousemove', mv); clearTimeout(t.current) }
-  }, [a, m])
-
-  useEffect(() => () => { o.current?.stop(); c.current?.close() }, [])
-
-  return (
-    <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 pointer-events-auto">
-      {a && (
-        <button onClick={mute} className="p-2.5 rounded-full bg-neutral-900/60 border border-white/10 hover:bg-neutral-800/80 transition-all backdrop-blur-md text-white shadow-lg cursor-pointer">
-          {m ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
-      )}
-      <button onClick={toggle} className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-lg flex items-center gap-2 cursor-pointer ${a ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20' : 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-500/25'}`}>
-        <Music className="w-3.5 h-3.5" /> {a ? (m ? 'Muteado' : 'Activo') : 'Activar Audio'}
-      </button>
     </div>
   )
 }

@@ -3,13 +3,11 @@
 import { useState, useEffect, createContext, ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CustomCursor, CursorTrail, DynamicBackground, AuroraBackground, CinematicGrain, CinematicVignette, LiquidEffect, ThemeSwitcher, ReactiveAudio } from '@/components/global-ui'
+import { CustomCursor, CursorTrail, DynamicBackground, AuroraBackground, CinematicGrain, CinematicVignette, LiquidEffect, ThemeSwitcher } from '@/components/global-ui'
 
-// ✅ Tipo actualizado: solo 'dark' | 'cyber'
 export const ThemeContext = createContext<{ theme: 'dark' | 'cyber'; setTheme: (t: 'dark' | 'cyber') => void }>({ theme: 'dark', setTheme: () => {} })
 
 export function Providers({ children }: { children: ReactNode }) {
-  // ✅ Estado actualizado: solo 'dark' | 'cyber'
   const [theme, setTheme] = useState<'dark' | 'cyber'>('dark')
   const [mobile, setMobile] = useState(false)
   const pathname = usePathname()
@@ -35,7 +33,6 @@ export function Providers({ children }: { children: ReactNode }) {
       <LiquidEffect />
       
       <ThemeSwitcher />
-      <ReactiveAudio />
 
       <AnimatePresence mode="wait">
         <motion.main
