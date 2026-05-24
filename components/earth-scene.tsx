@@ -102,7 +102,7 @@ export default function EarthScene() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.1 // ✅ Ligeramente reducido para evitar sobreexposición
+    renderer.toneMappingExposure = 1.1
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -150,24 +150,11 @@ export default function EarthScene() {
       nightMatRef.current = nMat
     })
 
-    // ✅ ATMÓSFERA (Sutil, sin efecto "bola de luz")
+    // ✅ ATMÓSFERA (Sutil, equilibrada)
     const atmoGeo = new THREE.SphereGeometry(R * 1.09, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.8);
-          vec3 atmosphere = vec3(0.25, 0.5, 1.0);
-          gl_FragColor = vec4(atmosphere, intensity * 0.25);
-        }
-      `,
+      vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+      fragmentShader: `varying vec3 vNormal;void main(){float intensity=pow(0.62-dot(vNormal,vec3(0.0,0.0,1.0)),2.8);vec3 atmosphere=vec3(0.25,0.5,1.0);gl_FragColor=vec4(atmosphere,intensity*0.25);}`,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true,
@@ -178,7 +165,7 @@ export default function EarthScene() {
     atmoMesh.renderOrder = 2
     earthGroup.add(atmoMesh)
 
-    // ✅ NUBES (Visibles, bien superpuestas, sin opacidad extrema)
+    // ✅ NUBES (Visibles, superpuestas limpiamente)
     const cloudGroup = new THREE.Group()
     earthGroup.add(cloudGroup)
     cloudGroupRef.current = cloudGroup
@@ -187,13 +174,7 @@ export default function EarthScene() {
     texLoader.load(
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
       (tex) => {
-        const cloudMat = new THREE.MeshPhongMaterial({
-          map: tex,
-          transparent: true,
-          opacity: 0.6,
-          depthWrite: false,
-          side: THREE.DoubleSide
-        })
+        const cloudMat = new THREE.MeshPhongMaterial({ map: tex, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide })
         const cloudMesh1 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.008, 64, 64), cloudMat)
         cloudMesh1.renderOrder = 1
         cloudGroup.add(cloudMesh1)
@@ -260,7 +241,7 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // Animation Loop
+    // ✅ ANIMATION LOOP (Curva de velocidad progresiva)
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
@@ -269,13 +250,27 @@ export default function EarthScene() {
       if (!isDraggingRef.current) {
         targetRotRef.current.x += rotVelRef.current.x
         targetRotRef.current.y += rotVelRef.current.y
-        rotVelRef.current.x *= 0.95
-        rotVelRef.current.y *= 0.95
+        rotVelRef.current.x *= 0.94
+        rotVelRef.current.y *= 0.94
 
-        if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
+        // ✅ Solo aplica rotación automática si no hay inercia de arrastre
+        if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.0005 && Math.abs(rotVelRef.current.y) < 0.0005) {
           if (!isHoveringEarthRef.current) {
-            targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
-            targetRotRef.current.x += -mouseNormRef.current.y * 0.001
+            // 🚀 Velocidad progresiva: cuanto más lejos del centro, más rápido
+            const x = mouseNormRef.current.x
+            const y = mouseNormRef.current.y
+            const deadZone = 0.12
+            const maxSpeed = 0.022
+            const curvePower = 2.0 // Curva cuadrática suave
+
+            if (Math.abs(x) > deadZone) {
+              const normX = Math.sign(x) * Math.pow((Math.abs(x) - deadZone) / (1 - deadZone), curvePower)
+              targetRotRef.current.y += normX * maxSpeed
+            }
+            if (Math.abs(y) > deadZone) {
+              const normY = Math.sign(y) * Math.pow((Math.abs(y) - deadZone) / (1 - deadZone), curvePower)
+              targetRotRef.current.x -= normY * maxSpeed * 0.5 // Eje Y ligeramente más suave
+            }
           }
         }
       }
