@@ -82,7 +82,7 @@ export default function EarthScene() {
   const autoRotateRef = useRef(true)
   const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const mouseNormRef = useRef({ x: 0, y: 0 })
-  const isHoveringEarthRef = useRef(false) // ✅ Nuevo: control de hover
+  const isHoveringEarthRef = useRef(false)
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
 
@@ -150,23 +150,51 @@ export default function EarthScene() {
       nightMatRef.current = nMat
     })
 
-    // Atmosphere
+    // ✅ ATMÓSFERA (Corregida: renderOrder + depthWrite + transparent explícito)
     const atmoGeo = new THREE.SphereGeometry(R * 1.08, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
       vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
       fragmentShader: `varying vec3 vNormal;void main(){float intensity=pow(0.72-dot(vNormal,vec3(0.0,0.0,1.0)),3.0);vec3 atmosphere=vec3(0.3,0.6,1.0)*intensity;gl_FragColor=vec4(atmosphere,intensity*0.9);}`,
-      blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true, depthWrite: false
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false
     })
-    earthGroup.add(new THREE.Mesh(atmoGeo, atmoMat))
+    const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat)
+    atmoMesh.renderOrder = 1
+    earthGroup.add(atmoMesh)
 
-    // Clouds
+    // ✅ NUBES (Corregidas: renderOrder + opacidad ajustada + carga segura)
     const cloudGroup = new THREE.Group()
     earthGroup.add(cloudGroup)
     cloudGroupRef.current = cloudGroup
-    texLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png', (tex) => {
-      cloudGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.01, 64, 64), new THREE.MeshPhongMaterial({ map: tex, transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide })))
-      cloudGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 64, 64), new THREE.MeshPhongMaterial({ map: tex, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide })))
-    })
+    cloudGroup.renderOrder = 2
+
+    texLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
+      (tex) => {
+        const cloudMat = new THREE.MeshPhongMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 0.85,
+          depthWrite: false,
+          depthTest: true,
+          side: THREE.DoubleSide
+        })
+        const cloudMesh1 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.01, 64, 64), cloudMat)
+        cloudMesh1.renderOrder = 2
+        cloudGroup.add(cloudMesh1)
+
+        const cloudMat2 = cloudMat.clone()
+        cloudMat2.opacity = 0.45
+        const cloudMesh2 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.025, 64, 64), cloudMat2)
+        cloudMesh2.renderOrder = 2
+        cloudGroup.add(cloudMesh2)
+      },
+      undefined,
+      (err) => console.warn('Cloud texture failed:', err)
+    )
 
     // Lights
     const ambient = new THREE.AmbientLight(0x222244, 0.5)
@@ -233,10 +261,9 @@ export default function EarthScene() {
         rotVelRef.current.y *= 0.95
 
         if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
-          // ✅ SOLO rota si el cursor NO está sobre la Tierra
           if (!isHoveringEarthRef.current) {
             targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
-            targetRotRef.current.x += -mouseNormRef.current.y * 0.001 // ✅ Eje Y invertido
+            targetRotRef.current.x += -mouseNormRef.current.y * 0.001
           }
         }
       }
@@ -297,11 +324,9 @@ export default function EarthScene() {
         mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
         raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
 
-        // ✅ Detectar si el cursor está sobre la Tierra
         const earthHits = raycasterRef.current.intersectObject(earthRef.current)
         isHoveringEarthRef.current = earthHits.length > 0
 
-        // Tooltips
         const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
         if (cityHits.length > 0) {
           setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
