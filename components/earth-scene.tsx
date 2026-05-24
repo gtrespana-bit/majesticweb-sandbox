@@ -75,15 +75,15 @@ export default function EarthScene() {
   const rafRef = useRef<number>(0)
   const triggersRef = useRef<ScrollTrigger[]>([])
   
-  const isHoveringEarthRef = useRef(false)
+  const isDraggingRef = useRef(false)
+  const prevMouseRef = useRef({ x: 0, y: 0 })
+  const targetRotRef = useRef({ x: 0, y: 0 })
+  const rotVelRef = useRef({ x: 0, y: 0 })
+  const autoRotateRef = useRef(true)
+  const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const mouseNormRef = useRef({ x: 0, y: 0 })
-  const velRef = useRef({ x: 0, y: 0 })
-  const targetVelRef = useRef({ x: 0, y: 0 })
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
-
-  const touchStartRef = useRef({ x: 0, y: 0 })
-  const isTouchingRef = useRef(false)
 
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
@@ -91,14 +91,10 @@ export default function EarthScene() {
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
-    // 📱 Detectar móvil una vez por mount
-    const isMobile = window.innerWidth < 768
-    
     const scene = new THREE.Scene()
     sceneRef.current = scene
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000)
-    // 📱 Cámara más alejada en móvil para que la Tierra sea ~40% más pequeña
-    camera.position.set(0, 0, isMobile ? 7.5 : 5)
+    camera.position.set(0, 0, 5)
     cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
@@ -223,34 +219,26 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // ✅ ANIMATION LOOP
+    // Animation Loop
     const clock = new THREE.Clock()
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       const time = clock.getElapsedTime()
 
-      if (!isHoveringEarthRef.current && !isTouchingRef.current) {
-        const x = mouseNormRef.current.x
-        const y = mouseNormRef.current.y
-        const deadZone = 0.15
-        const maxSpeed = 0.012
+      if (!isDraggingRef.current) {
+        targetRotRef.current.x += rotVelRef.current.x
+        targetRotRef.current.y += rotVelRef.current.y
+        rotVelRef.current.x *= 0.95
+        rotVelRef.current.y *= 0.95
 
-        targetVelRef.current.y = (Math.abs(x) > deadZone ? x : 0) * maxSpeed
-        targetVelRef.current.x = -(Math.abs(y) > deadZone ? y : 0) * (maxSpeed * 0.5)
-
-        if (Math.abs(x) <= deadZone && Math.abs(y) <= deadZone) {
-          targetVelRef.current.y += 0.0002
+        if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.001 && Math.abs(rotVelRef.current.y) < 0.001) {
+          targetRotRef.current.y += 0.0005 + mouseNormRef.current.x * 0.002
+          targetRotRef.current.x += mouseNormRef.current.y * 0.001
         }
-      } else if (isHoveringEarthRef.current) {
-        targetVelRef.current.y *= 0.9
-        targetVelRef.current.x *= 0.9
       }
 
-      velRef.current.x += (targetVelRef.current.x - velRef.current.x) * 0.06
-      velRef.current.y += (targetVelRef.current.y - velRef.current.y) * 0.06
-
-      earthGroup.rotation.y += velRef.current.y
-      earthGroup.rotation.x += velRef.current.x
+      earthGroup.rotation.x += (targetRotRef.current.x - earthGroup.rotation.x) * 0.15
+      earthGroup.rotation.y += (targetRotRef.current.y - earthGroup.rotation.y) * 0.15
 
       cloudGroup.children.forEach((child, i) => { if (child instanceof THREE.Mesh) child.rotation.y = time * (0.006 + i * 0.003) })
       
@@ -274,54 +262,48 @@ export default function EarthScene() {
     }
     animate()
 
-    // ✅ EVENTOS
+    // Events
+    const handleMouseDown = (e: MouseEvent) => {
+      isDraggingRef.current = true
+      autoRotateRef.current = false
+      clearTimeout(autoRotateTimerRef.current)
+      prevMouseRef.current = { x: e.clientX, y: e.clientY }
+    }
+    const handleMouseUp = () => {
+      isDraggingRef.current = false
+      autoRotateTimerRef.current = setTimeout(() => { autoRotateRef.current = true }, 4000)
+    }
     const handleMouseMove = (e: MouseEvent) => {
       mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
       mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
 
-      if (earthRef.current && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-        
-        raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
-        isHoveringEarthRef.current = raycasterRef.current.intersectObject(earthRef.current).length > 0
+      if (isDraggingRef.current) {
+        const dx = e.clientX - prevMouseRef.current.x
+        const dy = e.clientY - prevMouseRef.current.y
+        rotVelRef.current.x = dy * 0.005
+        rotVelRef.current.y = dx * 0.005
+        targetRotRef.current.x += rotVelRef.current.x
+        targetRotRef.current.y += rotVelRef.current.y
+        prevMouseRef.current = { x: e.clientX, y: e.clientY }
+      }
 
-        const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
-        if (cityHits.length > 0) {
-          setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
-        } else {
-          setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
-        }
+      const rect = containerRef.current!.getBoundingClientRect()
+      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+      raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
+      const intersects = raycasterRef.current.intersectObjects(cityMeshesRef.current)
+
+      if (intersects.length > 0) {
+        const city = intersects[0].object.userData.city
+        setTooltip({ visible: true, x: e.clientX, y: e.clientY, city })
+      } else {
+        setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
       }
     }
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        isTouchingRef.current = true
-        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      }
-    }
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1 && isTouchingRef.current) {
-        const dx = e.touches[0].clientX - touchStartRef.current.x
-        const dy = e.touches[0].clientY - touchStartRef.current.y
-        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        
-        // 📱 Velocidad táctil reducida
-        if (Math.abs(dx) > 2) {
-          targetVelRef.current.y += dx * 0.0008
-        }
-      }
-    }
-    const handleTouchEnd = () => {
-      isTouchingRef.current = false
-    }
-
+    containerRef.current.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('touchstart', handleTouchStart, { passive: true })
-    window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    window.addEventListener('touchend', handleTouchEnd)
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight
@@ -346,14 +328,12 @@ export default function EarthScene() {
       requestAnimationFrame(() => ScrollTrigger.refresh())
     }
 
-    // 📱 moveCamera con Z ajustado por dispositivo
     function moveCamera(index: number) {
-      const isMob = window.innerWidth < 768
       const positions = [
-        { z: isMob ? 7.5 : 5, x: 0, y: 0 },
-        { z: isMob ? 9.5 : 6.5, x: 2.5, y: 0.5 },
-        { z: isMob ? 7.5 : 5, x: -2.5, y: 0 },
-        { z: isMob ? 8.25 : 5.5, x: 0, y: 0 }
+        { z: 5, x: 0, y: 0 },
+        { z: 6.5, x: 2.5, y: 0.5 },
+        { z: 5, x: -2.5, y: 0 },
+        { z: 5.5, x: 0, y: 0 }
       ]
       const pos = positions[index] || positions[0]
       gsap.to(camera.position, { z: pos.z, x: pos.x, y: pos.y, duration: 2.5, ease: 'power3.inOut' })
@@ -361,11 +341,11 @@ export default function EarthScene() {
 
     return () => {
       cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('touchstart', handleTouchStart)
-      window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleTouchEnd)
       window.removeEventListener('resize', handleResize)
+      containerRef.current?.removeEventListener('mousedown', handleMouseDown)
+      clearTimeout(autoRotateTimerRef.current)
       triggersRef.current.forEach(t => t.kill())
       triggersRef.current = []
 
@@ -402,7 +382,7 @@ export default function EarthScene() {
 
   return (
     <>
-      <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto touch-pan-y" />
+      <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto" />
       
       {tooltip.visible && tooltip.city && (
         <div className="fixed z-50 pointer-events-none bg-black/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 min-w-[240px] shadow-2xl shadow-cyan-500/10 transition-opacity duration-200"
