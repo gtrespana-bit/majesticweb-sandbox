@@ -102,7 +102,7 @@ export default function EarthScene() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.2
+    renderer.toneMappingExposure = 1.1 // ✅ Ligeramente reducido para evitar sobreexposición
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -150,11 +150,24 @@ export default function EarthScene() {
       nightMatRef.current = nMat
     })
 
-    // ✅ ATMÓSFERA (Corregida: renderOrder + depthWrite + transparent explícito)
-    const atmoGeo = new THREE.SphereGeometry(R * 1.08, 128, 128)
+    // ✅ ATMÓSFERA (Sutil, sin efecto "bola de luz")
+    const atmoGeo = new THREE.SphereGeometry(R * 1.09, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
-      vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-      fragmentShader: `varying vec3 vNormal;void main(){float intensity=pow(0.72-dot(vNormal,vec3(0.0,0.0,1.0)),3.0);vec3 atmosphere=vec3(0.3,0.6,1.0)*intensity;gl_FragColor=vec4(atmosphere,intensity*0.9);}`,
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.8);
+          vec3 atmosphere = vec3(0.25, 0.5, 1.0);
+          gl_FragColor = vec4(atmosphere, intensity * 0.25);
+        }
+      `,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true,
@@ -162,14 +175,14 @@ export default function EarthScene() {
       depthTest: false
     })
     const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat)
-    atmoMesh.renderOrder = 1
+    atmoMesh.renderOrder = 2
     earthGroup.add(atmoMesh)
 
-    // ✅ NUBES (Corregidas: renderOrder + opacidad ajustada + carga segura)
+    // ✅ NUBES (Visibles, bien superpuestas, sin opacidad extrema)
     const cloudGroup = new THREE.Group()
     earthGroup.add(cloudGroup)
     cloudGroupRef.current = cloudGroup
-    cloudGroup.renderOrder = 2
+    cloudGroup.renderOrder = 1
 
     texLoader.load(
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
@@ -177,19 +190,18 @@ export default function EarthScene() {
         const cloudMat = new THREE.MeshPhongMaterial({
           map: tex,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.6,
           depthWrite: false,
-          depthTest: true,
           side: THREE.DoubleSide
         })
-        const cloudMesh1 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.01, 64, 64), cloudMat)
-        cloudMesh1.renderOrder = 2
+        const cloudMesh1 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.008, 64, 64), cloudMat)
+        cloudMesh1.renderOrder = 1
         cloudGroup.add(cloudMesh1)
 
         const cloudMat2 = cloudMat.clone()
-        cloudMat2.opacity = 0.45
-        const cloudMesh2 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.025, 64, 64), cloudMat2)
-        cloudMesh2.renderOrder = 2
+        cloudMat2.opacity = 0.3
+        const cloudMesh2 = new THREE.Mesh(new THREE.SphereGeometry(R * 1.018, 64, 64), cloudMat2)
+        cloudMesh2.renderOrder = 1
         cloudGroup.add(cloudMesh2)
       },
       undefined,
