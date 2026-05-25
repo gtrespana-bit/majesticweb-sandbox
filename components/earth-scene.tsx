@@ -24,7 +24,6 @@ export default function EarthScene() {
   const raycasterRef = useRef(new THREE.Raycaster())
   const mouseVecRef = useRef(new THREE.Vector2())
   const rafRef = useRef<number>(0)
-  const triggersRef = useRef<ScrollTrigger[]>([])
   
   const isDraggingRef = useRef(false)
   const prevMouseRef = useRef({ x: 0, y: 0 })
@@ -36,18 +35,10 @@ export default function EarthScene() {
   const isHoveringEarthRef = useRef(false)
   const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
   const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
+  const isNightRef = useRef(false)
 
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
-
-  // 🌍 Estado de iluminación controlado por scroll
-  const lightState = useRef({
-    sunX: 5, sunY: 3, sunZ: 5,
-    sunR: 1, sunG: 1, sunB: 1,
-    ambientInt: 0.6,
-    cloudOp: 0.5,
-    atmoOp: 0.35
-  })
 
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
@@ -163,7 +154,6 @@ export default function EarthScene() {
     })
     cityMeshesRef.current = cityMeshes
 
-    // Connections
     const arcGroup = new THREE.Group()
     earthGroup.add(arcGroup)
     arcGroupRef.current = arcGroup
@@ -183,25 +173,34 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // 🚀 SCROLL-DRIVEN LIGHTING
+    // 🎥 SCROLL-DRIVEN CAMERA PATH + DAY/NIGHT TRIGGER
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: 'body',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1.5,
-        onUpdate: (self) => {
-          const p = self.progress
-          gsap.to(lightState.current, {
-            sunX: 5 - p * 7, sunY: 3 - p * 1.5, sunZ: 5 - p * 8,
-            sunR: 1 - p * 0.5, sunG: 1 - p * 0.3, sunB: 1 + p * 0.4,
-            ambientInt: 0.6 - p * 0.35,
-            cloudOp: 0.5 - p * 0.3,
-            atmoOp: 0.35 + p * 0.45,
-            duration: 0.1, ease: 'none'
-          })
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.scroll-journey',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.2,
+          onUpdate: (self) => {
+            // 🌗 Día -> Noche al pasar del 50%
+            if (self.progress > 0.5 && !isNightRef.current) {
+              isNightRef.current = true
+              setIsNight(true)
+            } else if (self.progress <= 0.5 && isNightRef.current) {
+              isNightRef.current = false
+              setIsNight(false)
+            }
+          }
         }
       })
+
+      // Recorrido lateral + zoom cinematográfico
+      tl.to(camera.position, { x: -2.4, z: 4.0, duration: 1, ease: 'power2.inOut' })
+        .to(earthGroup.rotation, { y: 0.6, duration: 1 }, '<')
+        .to(camera.position, { x: 2.4, z: 5.2, duration: 1, ease: 'power2.inOut' })
+        .to(earthGroup.rotation, { y: 1.8, duration: 1 }, '<')
+        .to(camera.position, { x: 0, z: 4.5, duration: 1, ease: 'power2.inOut' })
+        .to(earthGroup.rotation, { y: 3.0, duration: 1 }, '<')
     }, containerRef)
 
     // Animation Loop
@@ -210,17 +209,6 @@ export default function EarthScene() {
       rafRef.current = requestAnimationFrame(animate)
       const t = clock.getElapsedTime()
 
-      // Aplicar estado de iluminación
-      if (sunLightRef.current) {
-        sunLightRef.current.position.set(lightState.current.sunX, lightState.current.sunY, lightState.current.sunZ)
-        sunLightRef.current.color.setRGB(lightState.current.sunR, lightState.current.sunG, lightState.current.sunB)
-      }
-      if (ambientLightRef.current) ambientLightRef.current.intensity = lightState.current.ambientInt
-      if (cloudGroupRef.current) cloudGroupRef.current.children.forEach((c, i) => { 
-        if (c instanceof THREE.Mesh) c.material.opacity = lightState.current.cloudOp * (i === 0 ? 1 : 0.6) 
-      })
-
-      // Rotación base + interacción
       if (!isDraggingRef.current) {
         targetRotRef.current.x += rotVelRef.current.x
         targetRotRef.current.y += rotVelRef.current.y
@@ -311,18 +299,24 @@ export default function EarthScene() {
     }
   }, [])
 
-  // Night Mode Sync
+  // Night Mode Sync (Materiales + Luces)
   useEffect(() => {
     if (!earthRef.current || !sunLightRef.current || !ambientLightRef.current || !cloudGroupRef.current) return
-    if (isNight) {
-      earthRef.current.material = nightMatRef.current || earthRef.current.material
-      sunLightRef.current.intensity = 0.05; ambientLightRef.current.intensity = 0.1
-      cloudGroupRef.current.children.forEach((c, i) => { if (c instanceof THREE.Mesh && c.material) c.material.opacity = i === 0 ? 0.2 : 0.1 })
-    } else {
-      earthRef.current.material = dayMatRef.current || earthRef.current.material
-      sunLightRef.current.intensity = 1.6; ambientLightRef.current.intensity = 0.6
-      cloudGroupRef.current.children.forEach((c, i) => { if (c instanceof THREE.Mesh && c.material) c.material.opacity = i === 0 ? 0.5 : 0.3 })
+    
+    gsap.to(sunLightRef.current, { intensity: isNight ? 0.1 : 1.6, duration: 0.8, ease: 'power2.inOut' })
+    gsap.to(ambientLightRef.current, { intensity: isNight ? 0.15 : 0.6, duration: 0.8, ease: 'power2.inOut' })
+    
+    if (isNight && nightMatRef.current) {
+      earthRef.current.material = nightMatRef.current
+    } else if (!isNight && dayMatRef.current) {
+      earthRef.current.material = dayMatRef.current
     }
+
+    cloudGroupRef.current.children.forEach((c, i) => { 
+      if (c instanceof THREE.Mesh && c.material) {
+        gsap.to(c.material, { opacity: isNight ? (i === 0 ? 0.15 : 0.05) : (i === 0 ? 0.5 : 0.3), duration: 0.8 })
+      }
+    })
   }, [isNight])
 
   return (

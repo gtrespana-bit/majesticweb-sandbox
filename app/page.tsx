@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 z-20 bg-transparent">
+      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 z-20">
         <div className="container mx-auto px-4 max-w-5xl text-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}>
             <h1 className="text-5xl md:text-7xl lg:text-9xl font-bold mb-6 bg-gradient-to-r from-white via-cyan-200 to-white bg-clip-text text-transparent leading-tight">
@@ -22,62 +22,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🌍 CONTENIDO REACTIVO (Se desplaza para no tapar el globo) */}
-      <div className="relative w-full z-20 pointer-events-none">
-        {/* Bloque 1: Frontend / Diseño */}
-        <section className="h-screen flex items-center justify-start px-8 md:px-24">
-          <motion.div 
-            className="max-w-xl pointer-events-auto"
-            initial={{ opacity: 0, x: -100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Frontend</h2>
-            <p className="text-xl text-cyan-300 font-light mb-6">Interfaces que respiran y convierten.</p>
-            <p className="text-white/60 leading-relaxed">Diseñamos experiencias visuales donde cada píxel tiene un propósito. Animaciones fluidas, accesibilidad nativa y rendimiento extremo.</p>
-          </motion.div>
-        </section>
-
-        {/* Bloque 2: Backend / Lógica */}
-        <section className="h-screen flex items-center justify-end px-8 md:px-24">
-          <motion.div 
-            className="max-w-xl pointer-events-auto text-right"
-            initial={{ opacity: 0, x: 100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Backend</h2>
-            <p className="text-xl text-violet-300 font-light mb-6">Arquitectura invisible y robusta.</p>
-            <p className="text-white/60 leading-relaxed">APIs escalables, bases de datos optimizadas y seguridad de nivel empresarial. Tu plataforma crece sin límites.</p>
-          </motion.div>
-        </section>
-
-        {/* Bloque 3: Cloud / Infraestructura */}
-        <section className="h-screen flex items-center justify-start px-8 md:px-24">
-          <motion.div 
-            className="max-w-xl pointer-events-auto"
-            initial={{ opacity: 0, x: -100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Cloud</h2>
-            <p className="text-xl text-amber-300 font-light mb-6">Despliegue global sin latencia.</p>
-            <p className="text-white/60 leading-relaxed">Infraestructura serverless, CI/CD automatizado y monitoreo 24/7. Tu web siempre disponible, en cualquier rincón del planeta.</p>
-          </motion.div>
-        </section>
-
-        {/* Bloque 4: Conexión / CTA */}
+      {/* 🌍 SCROLL JOURNEY (Activa cámara lateral + zoom + día/noche) */}
+      <div className="scroll-journey relative w-full z-20">
         <section className="h-screen flex items-center justify-center px-8">
-          <motion.div 
-            className="text-center pointer-events-auto max-w-3xl"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
-          >
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center">
+            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Frontend</h2>
+            <p className="text-xl text-cyan-300 font-light">Interfaces que respiran y convierten.</p>
+          </motion.div>
+        </section>
+
+        <section className="h-screen flex items-center justify-center px-8">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center">
+            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Backend</h2>
+            <p className="text-xl text-violet-300 font-light">Arquitectura invisible y robusta.</p>
+          </motion.div>
+        </section>
+
+        <section className="h-screen flex items-center justify-center px-8">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center">
+            <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Cloud</h2>
+            <p className="text-xl text-amber-300 font-light">Despliegue global sin latencia.</p>
+          </motion.div>
+        </section>
+
+        <section className="h-screen flex items-center justify-center px-8">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center">
             <h2 className="text-5xl md:text-8xl font-bold text-white mb-6">Conexión</h2>
             <p className="text-2xl text-emerald-300 font-light mb-10">Te conectamos con el mundo.</p>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-12 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-white font-bold text-xl shadow-lg shadow-cyan-500/30">
