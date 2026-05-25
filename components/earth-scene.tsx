@@ -13,380 +13,230 @@ export default function EarthScene() {
   const sceneRef = useRef<THREE.Scene | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const earthGroupRef = useRef<THREE.Group | null>(null)
-  const cloudGroupRef = useRef<THREE.Group | null>(null)
-  const cityGroupRef = useRef<THREE.Group | null>(null)
-  const arcGroupRef = useRef<THREE.Group | null>(null)
-  const earthRef = useRef<THREE.Mesh | null>(null)
-  const sunLightRef = useRef<THREE.DirectionalLight | null>(null)
-  const ambientLightRef = useRef<THREE.AmbientLight | null>(null)
-  const cityMeshesRef = useRef<THREE.Mesh[]>([])
-  const travelDotsRef = useRef<{ mesh: THREE.Mesh; curve: THREE.QuadraticBezierCurve3; progress: number; speed: number }[]>([])
-  const raycasterRef = useRef(new THREE.Raycaster())
-  const mouseVecRef = useRef(new THREE.Vector2())
+  const particlesRef = useRef<THREE.Points | null>(null)
+  const glowRef = useRef<THREE.Mesh | null>(null)
   const rafRef = useRef<number>(0)
-  
-  const isDraggingRef = useRef(false)
-  const prevMouseRef = useRef({ x: 0, y: 0 })
-  const targetRotRef = useRef({ x: 0, y: 0 })
-  const rotVelRef = useRef({ x: 0, y: 0 })
-  const autoRotateRef = useRef(true)
-  const autoRotateTimerRef = useRef<ReturnType<typeof setTimeout>>()
-  const mouseNormRef = useRef({ x: 0, y: 0 })
-  const isHoveringEarthRef = useRef(false)
   const isNightRef = useRef(false)
 
-  // Referencias a materiales
-  const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
-  const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
-
-  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
-  const [isNight, setIsNight] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
 
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
+    // Scene setup
     const scene = new THREE.Scene()
     sceneRef.current = scene
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000)
-    camera.position.set(0, 0, 5.5)
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+    camera.position.set(0, 0, 8)
     cameraRef.current = camera
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.0
+    renderer.toneMappingExposure = 1.2
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // Stars
-    const starsGeo = new THREE.BufferGeometry()
-    const starCount = 4000
-    const starPos = new Float32Array(starCount * 3)
-    for (let i = 0; i < starCount; i++) {
-      const r = 80 + Math.random() * 150
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      starPos[i*3] = r * Math.sin(phi) * Math.cos(theta)
-      starPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta)
-      starPos[i*3+2] = r * Math.cos(phi)
+    // 🌟 STARFIELD
+    const starsGeometry = new THREE.BufferGeometry()
+    const starsCount = 3000
+    const posArray = new Float32Array(starsCount * 3)
+    for(let i = 0; i < starsCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 100
     }
-    starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
-    const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ 
-      size: 0.12, color: 0xffffff, transparent: true, opacity: 0.7, sizeAttenuation: true, blending: THREE.AdditiveBlending 
-    }))
-    scene.add(stars)
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
+    const starsMaterial = new THREE.PointsMaterial({
+      size: 0.02,
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    })
+    const starsMesh = new THREE.Points(starsGeometry, starsMaterial)
+    scene.add(starsMesh)
 
-    // Earth Group
+    // 🌍 EARTH GROUP
     const earthGroup = new THREE.Group()
     scene.add(earthGroup)
     earthGroupRef.current = earthGroup
 
-    const R = 1.5
-    const texLoader = new THREE.TextureLoader()
-    
-    // ✅ CARGA DE TEXTURAS
-    Promise.all([
-      new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg', res)),
-      new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png', res)),
-      new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-night.jpg', res))
-    ]).then(([day, bump, night]) => {
-      
-      // 1. MATERIAL DÍA
-      const dayMat = new THREE.MeshPhongMaterial({
-        map: day,
-        bumpMap: bump,
-        bumpScale: 0.04,
-        color: 0xffffff,
-        specular: new THREE.Color(0x333333),
-        shininess: 15
-      })
-      dayMatRef.current = dayMat
-
-      // 2. MATERIAL NOCHE (SOLUCIÓN ANTI-VERDE)
-      // Color base negro puro + Textura de luces + Emissive. SIN BUMP, SIN SPECULAR.
-      const nightMat = new THREE.MeshPhongMaterial({
-        map: night,
-        emissiveMap: night,
-        emissive: new THREE.Color(0xffaa00), // Naranja cálido
-        emissiveIntensity: 1.8,
-        color: 0x000000, // Negro absoluto
-        specular: new THREE.Color(0x000000), // Sin brillos
-        shininess: 0,
-        bumpScale: 0 // Cero relieve
-      })
-      nightMatRef.current = nightMat
-
-      // Crear malla inicial
-      const earthGeo = new THREE.SphereGeometry(R, 128, 128)
-      const earth = new THREE.Mesh(earthGeo, dayMat)
-      earthGroup.add(earth)
-      earthRef.current = earth
+    // Earth Sphere (Estilizada - sin texturas problemáticas)
+    const earthGeometry = new THREE.SphereGeometry(2, 64, 64)
+    const earthMaterial = new THREE.MeshPhongMaterial({
+      color: 0x1a4d8c,
+      emissive: 0x000000,
+      specular: 0x111111,
+      shininess: 10,
+      transparent: true,
+      opacity: 0.95
     })
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial)
+    earthGroup.add(earth)
 
-    // Atmosphere
-    const atmoGeo = new THREE.SphereGeometry(R * 1.06, 128, 128)
-    const atmoMat = new THREE.ShaderMaterial({
-      vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-      fragmentShader: `
+    // Wireframe overlay (Tech look)
+    const wireframeGeometry = new THREE.WireframeGeometry(earthGeometry)
+    const wireframeMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x00f2fe, 
+      transparent: true, 
+      opacity: 0.05 
+    })
+    const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial)
+    earthGroup.add(wireframe)
+
+    // 🌟 CITY LIGHTS (Particles instead of textures)
+    const citiesCount = 200
+    const citiesGeometry = new THREE.BufferGeometry()
+    const citiesPos = new Float32Array(citiesCount * 3)
+    
+    for(let i = 0; i < citiesCount; i++) {
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      const r = 2.01
+      citiesPos[i*3] = r * Math.sin(phi) * Math.cos(theta)
+      citiesPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta)
+      citiesPos[i*3+2] = r * Math.cos(phi)
+    }
+    citiesGeometry.setAttribute('position', new THREE.BufferAttribute(citiesPos, 3))
+    const citiesMaterial = new THREE.PointsMaterial({
+      color: 0xffaa00,
+      size: 0.03,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    })
+    const citiesMesh = new THREE.Points(citiesGeometry, citiesMaterial)
+    earthGroup.add(citiesMesh)
+    particlesRef.current = citiesMesh
+
+    // 🌟 ATMOSPHERE GLOW
+    const glowGeometry = new THREE.SphereGeometry(2.2, 64, 64)
+    const glowMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
         varying vec3 vNormal;
-        void main(){
-          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
-          gl_FragColor = vec4(0.2, 0.4, 0.9, intensity * 0.12);
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
-      blending: THREE.AdditiveBlending, 
-      side: THREE.BackSide, 
-      transparent: true, 
-      depthWrite: false, 
-      depthTest: false
-    })
-    const atmo = new THREE.Mesh(atmoGeo, atmoMat)
-    atmo.renderOrder = 2
-    earthGroup.add(atmo)
-
-    // Clouds
-    const cloudGroup = new THREE.Group()
-    earthGroup.add(cloudGroup)
-    cloudGroupRef.current = cloudGroup
-    texLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png', (tex) => {
-      cloudGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.008, 64, 64), new THREE.MeshPhongMaterial({ map: tex, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide })))
-    })
-
-    // Lights
-    const ambient = new THREE.AmbientLight(0x444466, 0.6)
-    scene.add(ambient)
-    ambientLightRef.current = ambient
-    const sun = new THREE.DirectionalLight(0xffffff, 1.6)
-    sun.position.set(5, 3, 5)
-    scene.add(sun)
-    sunLightRef.current = sun
-
-    // Cities & Connections
-    const cityGroup = new THREE.Group()
-    earthGroup.add(cityGroup)
-    cityGroupRef.current = cityGroup
-    const cities = [
-      { name: "New York", lat: 40.7128, lon: -74.0060 }, { name: "London", lat: 51.5074, lon: -0.1278 },
-      { name: "Tokyo", lat: 35.6762, lon: 139.6503 }, { name: "Sydney", lat: -33.8688, lon: 151.2093 },
-      { name: "São Paulo", lat: -23.5505, lon: -46.6333 }, { name: "Dubai", lat: 25.2048, lon: 55.2708 },
-      { name: "Mumbai", lat: 19.0760, lon: 72.8777 }, { name: "Paris", lat: 48.8566, lon: 2.3522 },
-      { name: "Moscow", lat: 55.7558, lon: 37.6173 }, { name: "Beijing", lat: 39.9042, lon: 116.4074 }
-    ]
-    const cityMeshes: THREE.Mesh[] = []
-
-    cities.forEach(c => {
-      const phi = (90 - c.lat) * (Math.PI / 180)
-      const theta = (c.lon + 180) * (Math.PI / 180)
-      const pos = new THREE.Vector3(-R*1.01*Math.sin(phi)*Math.cos(theta), R*1.01*Math.cos(phi), R*1.01*Math.sin(phi)*Math.sin(theta))
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.95 }))
-      dot.position.copy(pos); dot.userData = { city: c }; cityGroup.add(dot); cityMeshes.push(dot)
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.025, 0.04, 24), new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.4, side: THREE.DoubleSide }))
-      ring.position.copy(pos); ring.lookAt(0,0,0); cityGroup.add(ring)
-    })
-    cityMeshesRef.current = cityMeshes
-
-    const arcGroup = new THREE.Group()
-    earthGroup.add(arcGroup)
-    arcGroupRef.current = arcGroup
-    const travelDots: typeof travelDotsRef.current = []
-    const conns = [[0,1],[0,2],[1,7],[2,3],[3,4],[5,6],[7,8],[8,9]]
-    conns.forEach(([a,b]) => {
-      const phiA = (90-cities[a].lat)*(Math.PI/180), thetaA = (cities[a].lon+180)*(Math.PI/180)
-      const phiB = (90-cities[b].lat)*(Math.PI/180), thetaB = (cities[b].lon+180)*(Math.PI/180)
-      const start = new THREE.Vector3(-R*Math.sin(phiA)*Math.cos(thetaA), R*Math.cos(phiA), R*Math.sin(phiA)*Math.sin(thetaA))
-      const end = new THREE.Vector3(-R*Math.sin(phiB)*Math.cos(thetaB), R*Math.cos(phiB), R*Math.sin(phiB)*Math.sin(thetaB))
-      const mid = start.clone().add(end).multiplyScalar(0.5).normalize().multiplyScalar(R*1.25)
-      const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
-      arcGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(40)), new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.15 })))
-      const td = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 8), new THREE.MeshBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0.9 }))
-      travelDots.push({ mesh: td, curve, progress: Math.random(), speed: 0.0008 + Math.random() * 0.0015 })
-      arcGroup.add(td)
-    })
-    travelDotsRef.current = travelDots
-
-    // 🎥 SCROLL
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: '.scroll-journey',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1.2,
-          onUpdate: (self) => {
-            if (self.progress > 0.5 && !isNightRef.current) {
-              isNightRef.current = true
-              setIsNight(true)
-            } else if (self.progress <= 0.5 && isNightRef.current) {
-              isNightRef.current = false
-              setIsNight(false)
-            }
-          }
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.6 - dot(vNormal, vec3(0, 0, 1.0)), 3.0);
+          gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity * 0.6;
         }
-      })
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true
+    })
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial)
+    scene.add(glow)
+    glowRef.current = glow
 
-      tl.to(camera.position, { x: -2.4, z: 4.0, duration: 1, ease: 'power2.inOut' })
-        .to(earthGroup.rotation, { y: 0.6, duration: 1 }, '<')
-        .to(camera.position, { x: 2.4, z: 5.2, duration: 1, ease: 'power2.inOut' })
-        .to(earthGroup.rotation, { y: 1.8, duration: 1 }, '<')
-        .to(camera.position, { x: 0, z: 4.5, duration: 1, ease: 'power2.inOut' })
-        .to(earthGroup.rotation, { y: 3.0, duration: 1 }, '<')
-    }, containerRef)
+    // ☀️ LIGHTING
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5)
+    scene.add(ambientLight)
+    
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5)
+    sunLight.position.set(5, 3, 5)
+    scene.add(sunLight)
 
-    // Animation Loop
-    const clock = new THREE.Clock()
-    const animate = () => {
-      rafRef.current = requestAnimationFrame(animate)
-      const t = clock.getElapsedTime()
-
-      if (!isDraggingRef.current) {
-        targetRotRef.current.x += rotVelRef.current.x
-        targetRotRef.current.y += rotVelRef.current.y
-        rotVelRef.current.x *= 0.94
-        rotVelRef.current.y *= 0.94
-
-        if (autoRotateRef.current && Math.abs(rotVelRef.current.x) < 0.0005 && Math.abs(rotVelRef.current.y) < 0.0005) {
-          if (!isHoveringEarthRef.current) {
-            const x = mouseNormRef.current.x
-            const y = mouseNormRef.current.y
-            const deadZone = 0.12
-            const maxSpeed = 0.018
-            if (Math.abs(x) > deadZone) targetRotRef.current.y += Math.sign(x) * Math.pow((Math.abs(x)-deadZone)/(1-deadZone), 2) * maxSpeed
-            if (Math.abs(y) > deadZone) targetRotRef.current.x -= Math.sign(y) * Math.pow((Math.abs(y)-deadZone)/(1-deadZone), 2) * maxSpeed * 0.5
+    // 🎥 SCROLL ANIMATION
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '.scroll-container',
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 1.5,
+        onUpdate: (self) => {
+          setScrollProgress(self.progress)
+          
+          // Day/Night transition
+          if (self.progress > 0.5 && !isNightRef.current) {
+            isNightRef.current = true
+            // Night mode
+            gsap.to(earthMaterial.color, { r: 0.02, g: 0.02, b: 0.05, duration: 1 })
+            gsap.to(earthMaterial, { emissiveIntensity: 0.3, duration: 1 })
+            gsap.to(citiesMaterial, { opacity: 1, size: 0.05, duration: 1 })
+            gsap.to(sunLight, { intensity: 0.05, duration: 1 })
+            gsap.to(ambientLight, { intensity: 0.1, duration: 1 })
+            gsap.to(glowMaterial.uniforms, { value: { intensity: 0.8 }, duration: 1 })
+          } else if (self.progress <= 0.5 && isNightRef.current) {
+            isNightRef.current = false
+            // Day mode
+            gsap.to(earthMaterial.color, { r: 0.1, g: 0.3, b: 0.55, duration: 1 })
+            gsap.to(earthMaterial, { emissiveIntensity: 0, duration: 1 })
+            gsap.to(citiesMaterial, { opacity: 0.3, size: 0.03, duration: 1 })
+            gsap.to(sunLight, { intensity: 1.5, duration: 1 })
+            gsap.to(ambientLight, { intensity: 0.5, duration: 1 })
           }
         }
       }
+    }).to(camera.position, { z: 6, duration: 1 }, 0)
+      .to(earthGroup.rotation, { y: Math.PI * 2, duration: 2 }, 0)
 
-      earthGroup.rotation.x += (targetRotRef.current.x - earthGroup.rotation.x) * 0.15
-      earthGroup.rotation.y += (targetRotRef.current.y - earthGroup.rotation.y) * 0.15
+    // Animation loop
+    const clock = new THREE.Clock()
+    const animate = () => {
+      rafRef.current = requestAnimationFrame(animate)
+      const time = clock.getElapsedTime()
 
-      cityMeshesRef.current.forEach((m, i) => {
-        const pulse = 1 + Math.sin(t*2 + i)*0.4
-        m.scale.setScalar(pulse)
-        const mat = m.material as THREE.MeshBasicMaterial
-        mat.opacity = 0.6 + Math.sin(t*2+i)*0.3
-      })
+      // Smooth rotation
+      earthGroup.rotation.y += 0.001
+      starsMesh.rotation.y = time * 0.02
+      
+      // Animate particles
+      if (particlesRef.current) {
+        particlesRef.current.rotation.y = time * 0.05
+      }
 
-      travelDotsRef.current.forEach(td => {
-        td.progress += td.speed
-        if (td.progress > 1) td.progress = 0
-        td.mesh.position.copy(td.curve.getPoint(td.progress))
-      })
-
-      stars.rotation.y = t * 0.0002
       renderer.render(scene, camera)
     }
     animate()
 
-    // Events
-    const handleMouseDown = (e: MouseEvent) => {
-      isDraggingRef.current = true; autoRotateRef.current = false; clearTimeout(autoRotateTimerRef.current)
-      prevMouseRef.current = { x: e.clientX, y: e.clientY }
-    }
-    const handleMouseUp = () => {
-      isDraggingRef.current = false; autoRotateTimerRef.current = setTimeout(() => { autoRotateRef.current = true }, 4000)
-    }
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseNormRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseNormRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      if (isDraggingRef.current) {
-        const dx = e.clientX - prevMouseRef.current.x
-        const dy = e.clientY - prevMouseRef.current.y
-        rotVelRef.current.x = dy * 0.005; rotVelRef.current.y = dx * 0.005
-        targetRotRef.current.x += rotVelRef.current.x; targetRotRef.current.y += rotVelRef.current.y
-        prevMouseRef.current = { x: e.clientX, y: e.clientY }
-      }
-
-      if (containerRef.current && earthRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-        raycasterRef.current.setFromCamera(mouseVecRef.current, camera)
-        isHoveringEarthRef.current = raycasterRef.current.intersectObject(earthRef.current).length > 0
-        const cityHits = raycasterRef.current.intersectObjects(cityMeshesRef.current)
-        if (cityHits.length > 0) setTooltip({ visible: true, x: e.clientX, y: e.clientY, city: cityHits[0].object.userData.city })
-        else setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev)
-      }
-    }
-
-    containerRef.current.addEventListener('mousedown', handleMouseDown)
-    window.addEventListener('mouseup', handleMouseUp)
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix()
+    // Resize handler
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight
+      camera.updateProjectionMatrix()
       renderer.setSize(window.innerWidth, window.innerHeight)
-    })
+    }
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      cancelAnimationFrame(rafRef.current); ctx.revert(); ScrollTrigger.getAll().forEach(t => t.kill())
-      window.removeEventListener('mouseup', handleMouseUp); window.removeEventListener('mousemove', handleMouseMove)
-      containerRef.current?.removeEventListener('mousedown', handleMouseDown)
-      clearTimeout(autoRotateTimerRef.current)
-      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) containerRef.current.removeChild(renderer.domElement)
-      scene.traverse(obj => { if (obj instanceof THREE.Mesh) { obj.geometry?.dispose(); if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material?.dispose() } })
+      cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('resize', handleResize)
+      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement)
+      }
       renderer.dispose()
     }
   }, [])
 
-  // 🌗 Sincronización Día/Noche (Nuclear Fix)
-  useEffect(() => {
-    if (!earthRef.current || !sunLightRef.current || !ambientLightRef.current || !cloudGroupRef.current) return
-    
-    if (isNight) {
-      // 🌑 MODO NOCHE:
-      // 1. Apagar TODAS las luces del mundo. Si queda luz, se ve verde.
-      gsap.to(sunLightRef.current, { intensity: 0, duration: 0.8 }) 
-      gsap.to(ambientLightRef.current, { intensity: 0, duration: 0.8 })
-      
-      // 2. Aplicar material exclusivo de noche (Negro + Luces)
-      if (nightMatRef.current) {
-        earthRef.current.material = nightMatRef.current
-        earthRef.current.material.needsUpdate = true // Forzar GPU
-      }
-
-      // 3. Ocultar nubes (se ven raras de noche)
-      cloudGroupRef.current.children.forEach((c, i) => { 
-        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: 0, duration: 0.8 }) 
-      })
-    } else {
-      // ☀️ MODO DIA:
-      // 1. Restaurar luces
-      gsap.to(sunLightRef.current, { intensity: 1.6, duration: 0.8 })
-      gsap.to(ambientLightRef.current, { intensity: 0.6, duration: 0.8 })
-      
-      // 2. Restaurar material de día (Mapa normal + Bump)
-      if (dayMatRef.current) {
-        earthRef.current.material = dayMatRef.current
-        earthRef.current.material.needsUpdate = true
-      }
-
-      // 3. Mostrar nubes
-      cloudGroupRef.current.children.forEach((c, i) => { 
-        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: i === 0 ? 0.5 : 0.3, duration: 0.8 }) 
-      })
-    }
-  }, [isNight])
-
   return (
     <>
-      <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-auto" />
-      {tooltip.visible && tooltip.city && (
-        <div className="fixed z-50 pointer-events-none bg-black/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 min-w-[240px] shadow-2xl shadow-cyan-500/10" style={{ left: tooltip.x + 20, top: tooltip.y - 15 }}>
-          <h4 className="text-cyan-400 font-semibold text-lg mb-1">📍 {tooltip.city.name}</h4>
-          <p className="text-white/50 text-sm mb-3">{tooltip.city.country}</p>
-          <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent mb-3" />
-          <div className="space-y-1 text-xs text-white/40">
-            <div className="flex justify-between"><span>Población</span><span className="text-white font-medium">{tooltip.city.pop}</span></div>
-            <div className="flex justify-between"><span>Latitud</span><span className="text-white font-medium">{Math.abs(tooltip.city.lat).toFixed(2)}°{tooltip.city.lat >= 0 ? 'N' : 'S'}</span></div>
-            <div className="flex justify-between"><span>Longitud</span><span className="text-white font-medium">{Math.abs(tooltip.city.lon).toFixed(2)}°{tooltip.city.lon >= 0 ? 'E' : 'W'}</span></div>
-            <div className="flex justify-between"><span>Zona horaria</span><span className="text-white font-medium">{tooltip.city.tz}</span></div>
-          </div>
+      <div ref={containerRef} className="fixed inset-0 z-0" />
+      
+      {/* UI Overlay */}
+      <div className="fixed inset-0 z-10 pointer-events-none flex flex-col justify-center items-center">
+        <div className={`text-center transition-all duration-1000 ${scrollProgress < 0.5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
+          <h1 className="text-6xl md:text-8xl font-bold text-white mb-4 tracking-tight">
+            Majestic<span className="text-cyan-400">Web</span>
+          </h1>
+          <p className="text-xl text-white/70 max-w-2xl mx-auto font-light">
+            Creamos experiencias digitales que trascienden fronteras
+          </p>
         </div>
-      )}
-      <button onClick={() => setIsNight(p => !p)} className="fixed top-24 right-6 z-50 w-12 h-12 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-center justify-center text-xl hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all" title="Modo Noche">
-        {isNight ? '☀️' : '🌙'}
-      </button>
+
+        <div className={`text-center transition-all duration-1000 ${scrollProgress >= 0.5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
+          <h2 className="text-5xl md:text-7xl font-bold text-white mb-4">Conexión Global</h2>
+          <p className="text-2xl text-cyan-400 font-light mb-8">Te conectamos con el mundo</p>
+          <button className="pointer-events-auto px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-white font-semibold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all">
+            Iniciar Proyecto
+          </button>
+        </div>
+      </div>
     </>
   )
 }
