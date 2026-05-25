@@ -4,57 +4,83 @@ import { motion } from 'framer-motion'
 
 export default function Home() {
   return (
-    <div className="scroll-container bg-black min-h-screen">
-      {/* Hero Section */}
-      <section className="h-screen flex items-center justify-center relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
-      </section>
+    <main className="bg-black text-white overflow-x-hidden">
+      {/* Track invisible que controla la animación 3D */}
+      <div className="scroll-track h-[400vh] w-full relative">
+        
+        {/* HERO */}
+        <section className="h-screen flex items-center justify-center sticky top-0 pointer-events-none">
+          <div className="text-center z-10 px-4">
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-5xl md:text-8xl font-bold tracking-tight mb-4"
+            >
+              Majestic<span className="text-cyan-400">Web</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 0.7 }} 
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-lg md:text-xl max-w-xl mx-auto font-light"
+            >
+              Creamos experiencias digitales que trascienden fronteras
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              transition={{ delay: 1 }}
+              className="mt-8 animate-bounce text-white/30"
+            >
+              ↓ Scroll para explorar
+            </motion.div>
+          </div>
+        </section>
 
-      {/* Services Section */}
-      <section className="h-screen flex items-center justify-center px-8 bg-gradient-to-b from-black to-neutral-950">
-        <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="max-w-6xl w-full"
-        >
-          <div className="grid md:grid-cols-3 gap-8">
+        {/* SECCIÓN 2: SERVICIOS */}
+        <section className="h-screen flex items-center justify-center sticky top-0 pointer-events-none">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl px-6 w-full z-10">
             {[
-              { title: 'Diseño UI/UX', desc: 'Interfaces que cautivan', icon: '🎨' },
-              { title: 'Desarrollo Web', desc: 'Código de élite', icon: '💻' },
-              { title: 'Estrategia Digital', desc: 'Resultados medibles', icon: '📈' }
-            ].map((item, i) => (
-              <div key={i} className="p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all">
-                <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
-                <p className="text-white/60">{item.desc}</p>
-              </div>
+              { t: 'Diseño UI/UX', d: 'Interfaces que capturan y convierten' },
+              { t: 'Desarrollo Web', d: 'Arquitectura escalable y segura' },
+              { t: 'Estrategia Digital', d: 'Datos, SEO y crecimiento real' }
+            ].map((s, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2 }}
+                className="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md"
+              >
+                <h3 className="text-xl font-bold mb-2">{s.t}</h3>
+                <p className="text-white/60 text-sm">{s.d}</p>
+              </motion.div>
             ))}
           </div>
-        </motion.div>
-      </section>
+        </section>
 
-      {/* Contact Section */}
-      <section className="h-screen flex items-center justify-center px-8 bg-neutral-950">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center max-w-3xl"
-        >
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">¿Listo para empezar?</h2>
-          <p className="text-xl text-white/60 mb-10">Transformemos tu visión en realidad digital</p>
-          <button className="px-12 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-white font-bold text-xl shadow-lg shadow-cyan-500/30 hover:scale-105 transition-transform">
-            Hablemos de tu proyecto
-          </button>
-        </motion.div>
-      </section>
+        {/* SECCIÓN 3: CONTACTO */}
+        <section className="h-screen flex items-center justify-center sticky top-0 pointer-events-none">
+          <div className="text-center z-10 px-4">
+            <h2 className="text-4xl md:text-6xl font-bold mb-6">¿Listo para escalar?</h2>
+            <p className="text-white/60 mb-8 max-w-lg mx-auto">Hablemos de tu próximo proyecto. Juntos crearemos algo extraordinario.</p>
+            <motion.button 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }}
+              className="pointer-events-auto px-10 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full font-semibold text-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all"
+            >
+              Iniciar Proyecto
+            </motion.button>
+          </div>
+        </section>
 
-      <footer className="py-8 border-t border-white/10 text-center text-white/40 text-sm">
+      </div>
+
+      <footer className="relative z-20 py-8 border-t border-white/10 text-center text-white/40 text-sm bg-black">
         © 2025 MajesticWeb Studio. Todos los derechos reservados.
       </footer>
-    </div>
+    </main>
   )
 }
