@@ -53,7 +53,7 @@ export default function EarthScene() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.1
+    renderer.toneMappingExposure = 1.0 // Ajuste para mayor contraste
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -89,6 +89,7 @@ export default function EarthScene() {
     earthGroup.add(earth)
     earthRef.current = earth
 
+    // Load Textures
     Promise.all([
       new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg', res)),
       new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png', res)),
@@ -96,18 +97,35 @@ export default function EarthScene() {
     ]).then(([day, bump, night]) => {
       dayMat.map = day; dayMat.bumpMap = bump; dayMat.needsUpdate = true
       const nMat = new THREE.MeshPhongMaterial({
-        map: night, emissiveMap: night, emissive: new THREE.Color(0xffddaa), emissiveIntensity: 1.2,
-        color: new THREE.Color(0x0a0a15), specular: new THREE.Color(0x111111), shininess: 5, bumpMap: bump, bumpScale: 0.04
+        map: night, 
+        emissiveMap: night, 
+        emissive: new THREE.Color(0xffaa00), // Color luz ciudad
+        emissiveIntensity: 1.5,
+        color: new THREE.Color(0x000000), // Base totalmente negra
+        specular: new THREE.Color(0x111111), 
+        shininess: 5, 
+        bumpMap: bump, 
+        bumpScale: 0.04
       })
       nightMatRef.current = nMat
     })
 
-    // Atmosphere
+    // ✅ ATMOSFERA CORREGIDA (Opacidad reducida de 0.35 a 0.12)
     const atmoGeo = new THREE.SphereGeometry(R * 1.06, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
       vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-      fragmentShader: `varying vec3 vNormal;void main(){float intensity=pow(0.65-dot(vNormal,vec3(0.0,0.0,1.0)),2.5);gl_FragColor=vec4(0.3,0.6,1.0,intensity*0.35);}`,
-      blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main(){
+          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+          gl_FragColor = vec4(0.2, 0.4, 0.9, intensity * 0.12); // ✅ Opacidad muy baja
+        }
+      `,
+      blending: THREE.AdditiveBlending, 
+      side: THREE.BackSide, 
+      transparent: true, 
+      depthWrite: false, 
+      depthTest: false
     })
     const atmo = new THREE.Mesh(atmoGeo, atmoMat)
     atmo.renderOrder = 2
@@ -173,7 +191,7 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // 🎥 SCROLL-DRIVEN CAMERA PATH + DAY/NIGHT TRIGGER
+    // 🎥 SCROLL-DRIVEN CAMERA
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -182,19 +200,14 @@ export default function EarthScene() {
           end: 'bottom bottom',
           scrub: 1.2,
           onUpdate: (self) => {
-            // 🌗 Día -> Noche al pasar del 50%
             if (self.progress > 0.5 && !isNightRef.current) {
-              isNightRef.current = true
-              setIsNight(true)
+              isNightRef.current = true; setIsNight(true)
             } else if (self.progress <= 0.5 && isNightRef.current) {
-              isNightRef.current = false
-              setIsNight(false)
+              isNightRef.current = false; setIsNight(false)
             }
           }
         }
       })
-
-      // Recorrido lateral + zoom cinematográfico
       tl.to(camera.position, { x: -2.4, z: 4.0, duration: 1, ease: 'power2.inOut' })
         .to(earthGroup.rotation, { y: 0.6, duration: 1 }, '<')
         .to(camera.position, { x: 2.4, z: 5.2, duration: 1, ease: 'power2.inOut' })
@@ -299,24 +312,31 @@ export default function EarthScene() {
     }
   }, [])
 
-  // Night Mode Sync (Materiales + Luces)
+  // 🌗 Night Mode Sync (LUCES AGRESIVAS PARA CONTRASTE)
   useEffect(() => {
     if (!earthRef.current || !sunLightRef.current || !ambientLightRef.current || !cloudGroupRef.current) return
     
-    gsap.to(sunLightRef.current, { intensity: isNight ? 0.1 : 1.6, duration: 0.8, ease: 'power2.inOut' })
-    gsap.to(ambientLightRef.current, { intensity: isNight ? 0.15 : 0.6, duration: 0.8, ease: 'power2.inOut' })
-    
-    if (isNight && nightMatRef.current) {
-      earthRef.current.material = nightMatRef.current
-    } else if (!isNight && dayMatRef.current) {
-      earthRef.current.material = dayMatRef.current
+    if (isNight) {
+      // Apagar sol y ambiente casi totalmente
+      gsap.to(sunLightRef.current, { intensity: 0.05, duration: 1.0 }) 
+      gsap.to(ambientLightRef.current, { intensity: 0.05, duration: 1.0 })
+      // Aplicar material nocturno
+      if (nightMatRef.current) earthRef.current.material = nightMatRef.current
+      // Nubes casi invisibles de noche
+      cloudGroupRef.current.children.forEach((c, i) => { 
+        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: 0.05, duration: 1.0 }) 
+      })
+    } else {
+      // Restaurar luz diurna
+      gsap.to(sunLightRef.current, { intensity: 1.6, duration: 1.0 })
+      gsap.to(ambientLightRef.current, { intensity: 0.6, duration: 1.0 })
+      // Aplicar material diurno
+      if (dayMatRef.current) earthRef.current.material = dayMatRef.current
+      // Nubes visibles
+      cloudGroupRef.current.children.forEach((c, i) => { 
+        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: i === 0 ? 0.5 : 0.3, duration: 1.0 }) 
+      })
     }
-
-    cloudGroupRef.current.children.forEach((c, i) => { 
-      if (c instanceof THREE.Mesh && c.material) {
-        gsap.to(c.material, { opacity: isNight ? (i === 0 ? 0.15 : 0.05) : (i === 0 ? 0.5 : 0.3), duration: 0.8 })
-      }
-    })
   }, [isNight])
 
   return (
