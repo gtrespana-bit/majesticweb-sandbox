@@ -35,6 +35,10 @@ export default function EarthScene() {
   const isHoveringEarthRef = useRef(false)
   const isNightRef = useRef(false)
 
+  // Referencias a materiales para intercambio limpio
+  const dayMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
+  const nightMatRef = useRef<THREE.MeshPhongMaterial | null>(null)
+
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; city: any }>({ visible: false, x: 0, y: 0, city: null })
   const [isNight, setIsNight] = useState(false)
 
@@ -51,7 +55,7 @@ export default function EarthScene() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.1 // Exposición equilibrada para que las luces de noche resalten
+    renderer.toneMappingExposure = 1.0
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -81,33 +85,45 @@ export default function EarthScene() {
     const R = 1.5
     const texLoader = new THREE.TextureLoader()
     
-    // Cargamos texturas en paralelo
+    // ✅ CARGA DE TEXTURAS Y CREACIÓN DE MATERIALES
     Promise.all([
       new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg', res)),
       new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png', res)),
       new Promise<THREE.Texture>((res) => texLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-night.jpg', res))
     ]).then(([day, bump, night]) => {
-      // ✅ MATERIAL UNIFICADO (Soluciona el color verde raro)
-      // Usamos el mapa de día como base y el de noche como capa de brillo (emissive)
-      const earthMat = new THREE.MeshPhongMaterial({
+      // MATERIAL DÍA: Textura azul/verde normal
+      const dayMat = new THREE.MeshPhongMaterial({
         map: day,
         bumpMap: bump,
         bumpScale: 0.04,
-        emissiveMap: night,      // Aquí está el truco: la textura de noche controla qué brilla
-        emissive: new THREE.Color(0xffaa00), // Color de las luces de ciudad (Naranja cálido)
-        emissiveIntensity: 0.0,  // Empieza en 0 (Día)
-        color: 0xffffff,         // Base blanca para que los colores del día sean reales
+        color: 0xffffff,
         specular: new THREE.Color(0x333333),
         shininess: 15
       })
-      
+      dayMatRef.current = dayMat
+
+      // MATERIAL NOCHE: Fondo NEGRO PURO + Mapa de luces naranjas
+      const nightMat = new THREE.MeshPhongMaterial({
+        map: night,             // Textura de ciudades nocturnas
+        emissiveMap: night,     // Mismo mapa para que brille
+        emissive: new THREE.Color(0xffaa00), // Color luz ciudad
+        emissiveIntensity: 1.5,
+        color: 0x000000,        // ✅ Base totalmente negra (elimina el verde)
+        specular: new THREE.Color(0x111111),
+        shininess: 5,
+        bumpMap: bump,
+        bumpScale: 0.04
+      })
+      nightMatRef.current = nightMat
+
+      // Crear malla con material inicial (Día)
       const earthGeo = new THREE.SphereGeometry(R, 128, 128)
-      const earth = new THREE.Mesh(earthGeo, earthMat)
+      const earth = new THREE.Mesh(earthGeo, dayMat)
       earthGroup.add(earth)
       earthRef.current = earth
     })
 
-    // Atmosphere (Sutil, como pediste)
+    // Atmosphere
     const atmoGeo = new THREE.SphereGeometry(R * 1.06, 128, 128)
     const atmoMat = new THREE.ShaderMaterial({
       vertexShader: `varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
@@ -115,7 +131,7 @@ export default function EarthScene() {
         varying vec3 vNormal;
         void main(){
           float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
-          gl_FragColor = vec4(0.2, 0.4, 0.9, intensity * 0.12); // Opacidad muy baja (0.12)
+          gl_FragColor = vec4(0.2, 0.4, 0.9, intensity * 0.12);
         }
       `,
       blending: THREE.AdditiveBlending, 
@@ -188,7 +204,7 @@ export default function EarthScene() {
     })
     travelDotsRef.current = travelDots
 
-    // 🎥 SCROLL-DRIVEN CAMERA + TRIGGER NIGHT MODE
+    // 🎥 SCROLL-DRIVEN CAMERA + TRIGGER
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -197,7 +213,6 @@ export default function EarthScene() {
           end: 'bottom bottom',
           scrub: 1.2,
           onUpdate: (self) => {
-            // 🌗 Trigger día/noche basado en posición del scroll
             if (self.progress > 0.5 && !isNightRef.current) {
               isNightRef.current = true
               setIsNight(true)
@@ -209,7 +224,6 @@ export default function EarthScene() {
         }
       })
 
-      // Recorrido lateral + zoom
       tl.to(camera.position, { x: -2.4, z: 4.0, duration: 1, ease: 'power2.inOut' })
         .to(earthGroup.rotation, { y: 0.6, duration: 1 }, '<')
         .to(camera.position, { x: 2.4, z: 5.2, duration: 1, ease: 'power2.inOut' })
@@ -314,37 +328,37 @@ export default function EarthScene() {
     }
   }, [])
 
-  // 🌗 Sincronización Día/Noche (Controla luces + brillo del material)
+  // 🌗 Sincronización Día/Noche (Intercambio limpio de materiales)
   useEffect(() => {
     if (!earthRef.current || !sunLightRef.current || !ambientLightRef.current || !cloudGroupRef.current) return
     
     if (isNight) {
-      // 🌑 NOCHE: Apagamos el sol y encendemos el brillo de las ciudades
-      gsap.to(sunLightRef.current, { intensity: 0.05, duration: 1.2, ease: 'power2.inOut' }) 
-      gsap.to(ambientLightRef.current, { intensity: 0.05, duration: 1.2, ease: 'power2.inOut' })
+      // 1. Bajar luces drásticamente
+      gsap.to(sunLightRef.current, { intensity: 0.02, duration: 1.0, ease: 'power2.inOut' })
+      gsap.to(ambientLightRef.current, { intensity: 0.02, duration: 1.0, ease: 'power2.inOut' })
       
-      // Subimos la intensidad emisiva para que las ciudades brillen
-      if (earthRef.current.material instanceof THREE.MeshPhongMaterial) {
-        gsap.to(earthRef.current.material, { emissiveIntensity: 1.8, duration: 1.2, ease: 'power2.inOut' })
-      }
-      
-      // Nubes casi invisibles de noche
-      cloudGroupRef.current.children.forEach((c, i) => { 
-        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: 0.05, duration: 1.2 }) 
-      })
-    } else {
-      // ☀️ DIA: Encendemos el sol y apagamos el brillo nocturno
-      gsap.to(sunLightRef.current, { intensity: 1.6, duration: 1.2, ease: 'power2.inOut' })
-      gsap.to(ambientLightRef.current, { intensity: 0.6, duration: 1.2, ease: 'power2.inOut' })
-      
-      // Bajamos la intensidad emisiva a 0 para que no se vean luces de día
-      if (earthRef.current.material instanceof THREE.MeshPhongMaterial) {
-        gsap.to(earthRef.current.material, { emissiveIntensity: 0.0, duration: 1.2, ease: 'power2.inOut' })
+      // 2. Forzar cambio de material a NOCHE (Fondo negro + luces naranjas)
+      if (nightMatRef.current && earthRef.current) {
+        earthRef.current.material = nightMatRef.current
       }
 
-      // Nubes visibles
+      // 3. Desvanecer nubes
       cloudGroupRef.current.children.forEach((c, i) => { 
-        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: i === 0 ? 0.5 : 0.3, duration: 1.2 }) 
+        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: 0.0, duration: 1.0 }) 
+      })
+    } else {
+      // 1. Subir luces
+      gsap.to(sunLightRef.current, { intensity: 1.6, duration: 1.0, ease: 'power2.inOut' })
+      gsap.to(ambientLightRef.current, { intensity: 0.6, duration: 1.0, ease: 'power2.inOut' })
+      
+      // 2. Forzar cambio de material a DÍA (Textura normal)
+      if (dayMatRef.current && earthRef.current) {
+        earthRef.current.material = dayMatRef.current
+      }
+
+      // 3. Mostrar nubes
+      cloudGroupRef.current.children.forEach((c, i) => { 
+        if (c instanceof THREE.Mesh && c.material) gsap.to(c.material, { opacity: i === 0 ? 0.5 : 0.3, duration: 1.0 }) 
       })
     }
   }, [isNight])
